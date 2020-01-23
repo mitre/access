@@ -14,15 +14,18 @@
                 <h1 class="typewriter">access</h1>
                 <hr>
                 <h3>A toolset of red-team initial access techniques</h3>
+                <div style="width: 25%;">
+                    <select id="showOption" onchange="show()">
+                        <option disabled selected>Select something to do</option>
+                        <option value="clone-website">I want to... clone a website</option>
+                    </select>
+                </div>
             </div>
 
-             <div class="section-profile">
+             <div id="clone-website" class="section-profile" style="display: none">
                 <div class="row">
                     <div class="column column-simple" style="flex:33%;border-right: solid white 1px;line-height: 10px;">
-                        <center>
-                            <div class="bubble-header"><h4>1</h4></div>
-                        </center>
-                        <h3>cloned website</h3>
+                        <h3>clone website</h3>
                         <h4>Automatically copy and host any website.</h4>
                         <p>
                             Upon cloning, the website can inject a payload of your choosing, so anyone
@@ -82,6 +85,12 @@
     <script src="/gui/jquery/jquery.js"></script>
     <script src="/gui/js/shared.js"></script>
     <script>
+        function show(){
+            let selected = $('#showOption').val();
+            $('.section-profile').css('display', 'none');
+            let parent = $('#'+selected);
+            $(parent).css('display', 'block');
+        }
         function updateCloneProps() {
             let data = {
                 'source': document.getElementById("source").value,
