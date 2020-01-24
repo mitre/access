@@ -18,13 +18,14 @@
                     <select id="showOption" onchange="show()">
                         <option disabled selected>Select something to do</option>
                         <option value="clone-website">I want to... clone a website</option>
+                        <option value="build-usb">I want to... load payload on USB</option>
                     </select>
                 </div>
             </div>
 
              <div id="clone-website" class="section-profile" style="display: none">
                 <div class="row">
-                    <div class="column column-simple" style="flex:33%;border-right: solid white 1px;line-height: 10px;">
+                    <div class="column column-simple section-border" style="flex:33%;">
                         <h3>clone website</h3>
                         <h4>Automatically copy and host any website.</h4>
                         <p>
@@ -70,7 +71,7 @@
                                 </tr>
                             </table>
                             <center>
-                                <button class="button-success" onclick="updateCloneProps()">Update</button>
+                                <button class="button-success" onclick="updateCloneProps()">Clone</button>
                             </center>
                         </div>
                     </div>
@@ -79,6 +80,52 @@
                     </div>
                 </div>
              </div>
+
+            <div id="build-usb" class="section-profile" style="display: none">
+                <div class="row">
+                    <div class="column column-simple section-border" style="flex:33%;">
+                        <h3>build usb</h3>
+                        <h4>Compile a payload on a USB drive.</h4>
+                        <p>
+                            This functionality is compatiable with Hak5 rubber ducky drives. Upon building the drive,
+                            when you plug it into a host computer, it will automatically execute the loaded payload.
+                        </p>
+                        <div class="inner-box">
+                            <table style="border-spacing: 10px;">
+                                <tr>
+                                    <td><b><p>Selected payload</p></b></td>
+                                    <td><p>sandcat.go</p></td>
+                                </tr>
+                                <tr>
+                                    <td><b><p>C2 server</p></b></td>
+                                    <td><input id="usb-server" type="text" value="http://localhost:8888"/></td>
+                                </tr>
+                                <tr>
+                                    <td><b>USB drive</b></td>
+                                    <td><input id="usb-drive" type="text" placeholder="/Volumes/Untitled"/></td>
+                                </tr>
+                                <tr>
+                                    <td><b>Platform</b></td>
+                                    <td>
+                                        <select id="usb-platform">
+                                            <option selected disabled>Select target OS</option>
+                                            <option value="darwin">MacOS</option>
+                                            <option value="linux">Linux</option>
+                                            <option value="windows">Windows</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
+                            <center>
+                                <button class="button-success" onclick="buildUsb()">Build</button>
+                            </center>
+                        </div>
+                    </div>
+                    <div class="column" style="flex:67%;">
+                        <pre id="usb_logs" style="text-align: left"></pre>
+                    </div>
+                </div>
+            </div>
 
         </center>
     </body>
@@ -100,7 +147,7 @@
             };
             $('.inner-box').css('background-color', 'maroon');
             $.ajax({
-               url: '/plugin/access/props',
+               url: '/plugin/access/clone',
                type: 'POST',
                contentType: 'application/json',
                data: JSON.stringify(data),
@@ -108,6 +155,24 @@
                    $('#clone_site').val(data['clone_site']);
                    $('.inner-box').css('background-color', 'var(--primary-background)');
                    document.getElementById('preview').contentWindow.location.reload();
+               },
+               error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError) }
+            });
+        }
+
+        function buildUsb() {
+            let data = {
+                'server': $('#usb-server').val(),
+                'drive': $('#usb-drive').val(),
+                'platform': $('#usb-platform').val()
+            };
+            $.ajax({
+               url: '/plugin/access/usb',
+               type: 'POST',
+               contentType: 'application/json',
+               data: JSON.stringify(data),
+               success: function(data, status, options) {
+                   $('#usb_logs').html(data['usb_logs']);
                },
                error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError) }
             });

