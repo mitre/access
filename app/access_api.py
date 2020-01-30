@@ -1,7 +1,7 @@
 from aiohttp import web
 from aiohttp_jinja2 import template
 
-from app.objects.c_fact import Fact
+from app.objects.secondclass.c_fact import Fact
 from plugins.access.app.red.red_clone import RedClone
 from plugins.access.app.red.red_usb import RedUsb
 
