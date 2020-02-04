@@ -10,7 +10,7 @@ class RedClone(BaseWorld):
         if self._valid_url(url):
             self._replace_payload(props)
             location = 'plugins/access/static/malicious'
-            #open('%s/index.html' % location, 'w').close()
+            open('%s/index.html' % location, 'w').close()
             user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
             subprocess.call(["wget", "-U", user_agent, "-E", "-H", "-K", "-q", "-nH", url,
                              "--no-check-certificate", "-O", "%s/index.html" % location], shell=False)
