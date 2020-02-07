@@ -1,181 +1,147 @@
-<html>
-    <head>
-        <title>Access | Initial access</title>
-        <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
-        <link rel="stylesheet" href="/gui/css/shared.css">
-        <link rel="stylesheet" href="/gui/css/navbar.css">
-        <link rel="stylesheet" href="/gui/css/basic.css">
-        <link rel="stylesheet" href="/sandcat/css/basic.css">
-    </head>
-    <body>
-    <div class="navbar plugin"></div>
-        <center style="margin-bottom: 100px">
-            <div class="simple-plugin-intro">
-                <h1 class="typewriter">access</h1>
-                <hr>
-                <h3>A toolset of red-team initial access techniques</h3>
-                <div style="width: 25%;">
-                    <select id="showOption" onchange="show()">
-                        <option disabled selected>Select something to do</option>
-                        <option value="clone-website">I want to... clone a website</option>
-                        <option value="build-usb">I want to... load payload on USB</option>
-                    </select>
-                </div>
+<div id="access-section-1" class="section-profile">
+    <div class="row">
+        <div class="topleft duk-icon"><img onclick="removeSection('access-section-1')" src="/gui/img/x.png"></div>
+        <div class="column column-simple section-border" style="flex:33%;">
+            <h3>clone website</h3>
+            <h4>Automatically copy and host any website.</h4>
+            <p>
+                Upon cloning, the website can inject a payload of your choosing, so anyone
+                browsing to it will experience a drive-by download. Furthermore, a JavaScript
+                key logger can be injected, which will record all key strokes and send
+                them to the server when the user clicks "Enter". Collected data will attached
+                to the selected fact source.
+            </p>
+            <div class="inner-box">
+                <table style="border-spacing: 10px;">
+                    <tr>
+                        <td><b><p>Cloned</p></b></td>
+                        <td><input id="clone_site" type="text" value="{{ clone_site }}"/></td>
+                    </tr>
+                    <tr>
+                        <td><b><p>Target</p></b></td>
+                        <td><a href="{{ clone_url }}" target="_blank">{{ clone_url }}</a></td>
+                    </tr>
+                    <tr>
+                        <td><b><p>Payload</p></b></td>
+                        <td><p>{{ clone_payload }}</p></td>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td><input id="include-payload" type="checkbox"></td>
+                        <td><label for="include-payload"><p>&nbsp;&nbsp;Inject payload?</p></label></td>
+                    </tr>
+                    <tr>
+                        <td><input id="include-keylogger" type="checkbox"></td>
+                        <td><label for="include-keylogger"><p>&nbsp;&nbsp;Inject key logger?</p></label></td>
+                    </tr>
+                    <tr>
+                        <td><b><p>Assign facts to</p></b></td>
+                        <td>
+                            <select name="source" id="source">
+                            {% for s in sources %}
+                                <option value="{{ s.name }}">{{ s.name }} source</option>
+                            {% endfor %}
+                          </select>
+                        </td>
+                    </tr>
+                </table>
+                <center>
+                    <button class="button-success" onclick="updateCloneProps()">Clone</button>
+                </center>
             </div>
+        </div>
+        <div class="column" style="flex:67%;">
+            <iframe id="preview" style="height: 80%; width:100%" src="/access/malicious/index.html"></iframe>
+        </div>
+    </div>
+</div>
 
-             <div id="clone-website" class="section-profile" style="display: none">
-                <div class="row">
-                    <div class="column column-simple section-border" style="flex:33%;">
-                        <h3>clone website</h3>
-                        <h4>Automatically copy and host any website.</h4>
-                        <p>
-                            Upon cloning, the website can inject a payload of your choosing, so anyone
-                            browsing to it will experience a drive-by download. Furthermore, a JavaScript
-                            key logger can be injected, which will record all key strokes and send
-                            them to the server when the user clicks "Enter". Collected data will attached
-                            to the selected fact source.
-                        </p>
-                        <div class="inner-box">
-                            <table style="border-spacing: 10px;">
-                                <tr>
-                                    <td><b><p>Cloned</p></b></td>
-                                    <td><input id="clone_site" type="text" value="{{ clone_site }}"/></td>
-                                </tr>
-                                <tr>
-                                    <td><b><p>Target</p></b></td>
-                                    <td><a href="{{ clone_url }}" target="_blank">{{ clone_url }}</a></td>
-                                </tr>
-                                <tr>
-                                    <td><b><p>Payload</p></b></td>
-                                    <td><p>{{ clone_payload }}</p></td>
-                                </tr>
-                            </table>
-                            <table>
-                                <tr>
-                                    <td><input id="include-payload" type="checkbox"></td>
-                                    <td><label for="include-payload"><p>&nbsp;&nbsp;Inject payload?</p></label></td>
-                                </tr>
-                                <tr>
-                                    <td><input id="include-keylogger" type="checkbox"></td>
-                                    <td><label for="include-keylogger"><p>&nbsp;&nbsp;Inject key logger?</p></label></td>
-                                </tr>
-                                <tr>
-                                    <td><b><p>Assign facts to</p></b></td>
-                                    <td>
-                                        <select name="source" id="source">
-                                        {% for s in sources %}
-                                            <option value="{{ s.name }}">{{ s.name }} source</option>
-                                        {% endfor %}
-                                      </select>
-                                    </td>
-                                </tr>
-                            </table>
-                            <center>
-                                <button class="button-success" onclick="updateCloneProps()">Clone</button>
-                            </center>
-                        </div>
-                    </div>
-                    <div class="column" style="flex:67%;">
-                        <iframe id="preview" style="height: 80%; width:100%" src="/access/malicious/index.html"></iframe>
-                    </div>
-                </div>
-             </div>
-
-            <div id="build-usb" class="section-profile" style="display: none">
-                <div class="row">
-                    <div class="column column-simple section-border" style="flex:33%;">
-                        <h3>build usb</h3>
-                        <h4>Compile a payload on a USB drive.</h4>
-                        <p>
-                            This functionality is compatiable with Hak5 rubber ducky drives. Upon building the drive,
-                            when you plug it into a host computer, it will automatically execute the loaded payload.
-                        </p>
-                        <div class="inner-box">
-                            <table style="border-spacing: 10px;">
-                                <tr>
-                                    <td><b><p>Selected payload</p></b></td>
-                                    <td><p>sandcat.go</p></td>
-                                </tr>
-                                <tr>
-                                    <td><b><p>C2 server</p></b></td>
-                                    <td><input id="usb-server" type="text" value="http://localhost:8888"/></td>
-                                </tr>
-                                <tr>
-                                    <td><b>USB drive</b></td>
-                                    <td><input id="usb-drive" type="text" placeholder="/Volumes/Untitled"/></td>
-                                </tr>
-                                <tr>
-                                    <td><b>Platform</b></td>
-                                    <td>
-                                        <select id="usb-platform">
-                                            <option selected disabled>Select target OS</option>
-                                            <option value="darwin">MacOS</option>
-                                            <option value="linux">Linux</option>
-                                            <option value="windows">Windows</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                            </table>
-                            <center>
-                                <button class="button-success" onclick="buildUsb()">Build</button>
-                            </center>
-                        </div>
-                    </div>
-                    <div class="column" style="flex:67%;">
-                        <pre id="usb_logs" style="text-align: left"></pre>
-                    </div>
-                </div>
+<div id="access-section-2" class="section-profile">
+    <div class="row">
+        <div class="topleft duk-icon"><img onclick="removeSection('access-section-2')" src="/gui/img/x.png"></div>
+        <div class="column column-simple section-border" style="flex:33%;">
+            <h3>build usb</h3>
+            <h4>Compile a payload on a USB drive.</h4>
+            <p>
+                This functionality is compatiable with Hak5 rubber ducky drives. Upon building the drive,
+                when you plug it into a host computer, it will automatically execute the loaded payload.
+            </p>
+            <div class="inner-box">
+                <table style="border-spacing: 10px;">
+                    <tr>
+                        <td><b><p>Selected payload</p></b></td>
+                        <td><p>sandcat.go</p></td>
+                    </tr>
+                    <tr>
+                        <td><b><p>C2 server</p></b></td>
+                        <td><input id="usb-server" type="text" value="http://localhost:8888"/></td>
+                    </tr>
+                    <tr>
+                        <td><b>USB drive</b></td>
+                        <td><input id="usb-drive" type="text" placeholder="/Volumes/Untitled"/></td>
+                    </tr>
+                    <tr>
+                        <td><b>Platform</b></td>
+                        <td>
+                            <select id="usb-platform">
+                                <option selected disabled>Select target OS</option>
+                                <option value="darwin">MacOS</option>
+                                <option value="linux">Linux</option>
+                                <option value="windows">Windows</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+                <center>
+                    <button class="button-success" onclick="buildUsb()">Build</button>
+                </center>
             </div>
+        </div>
+        <div class="column" style="flex:67%;">
+            <pre id="usb_logs" style="text-align: left"></pre>
+        </div>
+    </div>
+</div>
 
-        </center>
-    </body>
-    <script src="/gui/jquery/jquery.js"></script>
-    <script src="/gui/js/shared.js"></script>
-    <script>
-        function show(){
-            let selected = $('#showOption').val();
-            $('.section-profile').css('display', 'none');
-            let parent = $('#'+selected);
-            $(parent).css('display', 'block');
-        }
-        function updateCloneProps() {
-            let data = {
-                'source': document.getElementById("source").value,
-                'clone_site': $('#clone_site').val(),
-                'inject_payload': $('#include-payload').is(':checked'),
-                'inject_keylogger': $('#include-keylogger').is(':checked')
-            };
-            $('.inner-box').css('background-color', 'maroon');
-            $.ajax({
-               url: '/plugin/access/clone',
-               type: 'POST',
-               contentType: 'application/json',
-               data: JSON.stringify(data),
-               success: function(data, status, options) {
-                   $('#clone_site').val(data['clone_site']);
-                   $('.inner-box').css('background-color', 'var(--primary-background)');
-                   document.getElementById('preview').contentWindow.location.reload();
-               },
-               error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError) }
-            });
-        }
+<script>
+    function updateCloneProps() {
+        let data = {
+            'source': document.getElementById("source").value,
+            'clone_site': $('#clone_site').val(),
+            'inject_payload': $('#include-payload').is(':checked'),
+            'inject_keylogger': $('#include-keylogger').is(':checked')
+        };
+        $('.inner-box').css('background-color', 'maroon');
+        $.ajax({
+           url: '/plugin/access/clone',
+           type: 'POST',
+           contentType: 'application/json',
+           data: JSON.stringify(data),
+           success: function(data, status, options) {
+               $('#clone_site').val(data['clone_site']);
+               $('.inner-box').css('background-color', 'var(--primary-background)');
+               document.getElementById('preview').contentWindow.location.reload();
+           },
+           error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError) }
+        });
+    }
 
-        function buildUsb() {
-            let data = {
-                'server': $('#usb-server').val(),
-                'drive': $('#usb-drive').val(),
-                'platform': $('#usb-platform').val()
-            };
-            $.ajax({
-               url: '/plugin/access/usb',
-               type: 'POST',
-               contentType: 'application/json',
-               data: JSON.stringify(data),
-               success: function(data, status, options) {
-                   $('#usb_logs').html(data['usb_logs']);
-               },
-               error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError) }
-            });
-        }
-    </script>
-</html>
+    function buildUsb() {
+        let data = {
+            'server': $('#usb-server').val(),
+            'drive': $('#usb-drive').val(),
+            'platform': $('#usb-platform').val()
+        };
+        $.ajax({
+           url: '/plugin/access/usb',
+           type: 'POST',
+           contentType: 'application/json',
+           data: JSON.stringify(data),
+           success: function(data, status, options) {
+               $('#usb_logs').html(data['usb_logs']);
+           },
+           error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError) }
+        });
+    }
+</script>
