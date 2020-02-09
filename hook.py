@@ -4,6 +4,7 @@ from plugins.access.app.red.red_clone import RedClone
 name = 'Access'
 description = 'A toolkit containing a set of functional red-team tools'
 address = '/plugin/access/gui'
+authentication = 'red'
 
 
 async def enable(services):
