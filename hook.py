@@ -1,10 +1,11 @@
+from app.utility.base_world import BaseWorld
 from plugins.access.app.access_api import AccessApi
 from plugins.access.app.red.red_clone import RedClone
 
 name = 'Access'
 description = 'A toolkit containing a set of functional red-team tools'
 address = '/plugin/access/gui'
-authentication = 'red'
+access = BaseWorld.Access.RED
 
 
 async def enable(services):
