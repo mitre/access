@@ -7,7 +7,7 @@
       <p class="section-description">
           Here you'll find exploits which are designed to initiate access on a remote
           host. The goal of each exploit is to either learn information about a remote host - or deploy an
-          agent on it, by exploiting a known vulnerability.
+          agent on it by exploiting a known vulnerability.
       </p>
       <select id="exploits" onchange="showProperties()">
         <option disabled selected>Choose an exploit</option>
@@ -24,7 +24,7 @@
 
     </div>
     <div class="column" style="flex:75%">
-      
+
     </div>
   </div>
 </div>
@@ -33,8 +33,10 @@
     function showProperties(){
         function propertiesCallback(data){
             $('#exploit-properties').empty();
-            $.each(data[0].properties, function(k, v) {
-                $('#exploit-properties').append('<tr><td><input type="text" placeholder="Enter '+k+' value" style="text-align:left"/></td></tr>');
+                data[0].properties.forEach(function(prop){
+                    $.each(prop, function(k, v) {
+                        $('#exploit-properties').append('<tr><td style="font-size:12px;">'+k+'</td><td><input type="text" value="'+v+'" placeholder="Required value" style="text-align:left;font-size:12px"/></td></tr>');
+                });
             });
         }
         let exploitID = $('#exploits option:selected').attr('value');
