@@ -25,5 +25,5 @@ async def _load_exploits(data_svc):
     for filename in glob.iglob('plugins/access/data/exploits/**/*.yml', recursive=True):
         for ex in BaseWorld.strip_yml(filename):
             exploit = Exploit(identifier=ex['id'], name=ex['name'], category=ex['category'], payload=ex['payload'],
-                              properties=ex['properties'], access=BaseWorld.Access.RED)
+                              description=ex['description'], properties=ex['properties'], access=BaseWorld.Access.RED)
             await data_svc.store(exploit)

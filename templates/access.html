@@ -17,6 +17,7 @@
       </select>
       <br><br>
       <div>
+        <i><p id="exploit-description" style="margin-right:20px;"></p></i>
         <table id="exploit-properties" class="obfuscation-table" border=1 frame=void rules=rows></table>
       </div>
       <br>
@@ -33,6 +34,7 @@
     function showProperties(){
         function propertiesCallback(data){
             $('#exploit-properties').empty();
+                $('#exploit-description').text(data[0].description);
                 data[0].properties.forEach(function(prop){
                     $.each(prop, function(k, v) {
                         $('#exploit-properties').append('<tr><td style="font-size:12px;">'+k+'</td><td><input type="text" value="'+v+'" placeholder="Required value" style="text-align:left;font-size:12px"/></td></tr>');
