@@ -37,6 +37,21 @@
 </div>
 
 <script>
+    let refresher = setInterval(refresh, 10000);
+    $('.section-profile').bind('destroyed', function() {
+        clearInterval(refresher);
+    });
+
+    function refresh(){
+        function refreshCallback(data){
+            console.log(data);
+        }
+        let paw = $('#pets option:selected').attr('value');
+        if(paw !== null) {
+            restRequest('POST', {'index':'agents', 'paw': paw}, refreshCallback);
+        }
+    }
+
     function showProperties(){
         function propertiesCallback(data){
             let cmd = atob(data[0].test);
