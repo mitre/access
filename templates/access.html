@@ -11,8 +11,8 @@
       </p>
       <select id="exploits" onchange="showProperties()">
         <option disabled selected>Choose an exploit</option>
-        {% for ex in exploits %}
-            <option value={{ ex.identifier }}>{{ ex.name }}</option>
+        {% for k, v in exploits.items() %}
+            <option value={{ k }}>{{ v }}</option>
         {% endfor %}}
       </select>
       <br><br>
@@ -33,15 +33,18 @@
 <script>
     function showProperties(){
         function propertiesCallback(data){
+            let cmd = atob(data[0].test);
+            let found = [], rxp = /{([^}]+)}/g, str = cmd, curMatch;
+            while(curMatch = rxp.exec(str)) {
+                found.push(curMatch[1]);
+            }
             $('#exploit-properties').empty();
-                $('#exploit-description').text(data[0].description);
-                data[0].properties.forEach(function(prop){
-                    $.each(prop, function(k, v) {
-                        $('#exploit-properties').append('<tr><td style="font-size:12px;">'+k+'</td><td><input type="text" value="'+v+'" placeholder="Required value" style="text-align:left;font-size:12px"/></td></tr>');
-                });
+            $('#exploit-description').text(data[0].description);
+            found.forEach(function(prop){
+                $('#exploit-properties').append('<tr><td style="font-size:12px;">'+prop+'</td><td><input type="text" placeholder="Required value" style="text-align:left;font-size:12px"/></td></tr>');
             });
         }
-        let exploitID = $('#exploits option:selected').attr('value');
-        restRequest('POST', {'index':'exploits', 'identifier': exploitID}, propertiesCallback);
+        let ability_id = $('#exploits option:selected').attr('value');
+        restRequest('POST', {'index':'abilities', 'ability_id': ability_id}, propertiesCallback);
     }
 </script>

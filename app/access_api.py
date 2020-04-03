@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from aiohttp_jinja2 import template
 
 from app.service.auth_svc import check_authorization
@@ -12,4 +14,7 @@ class AccessApi:
     @check_authorization
     @template('access.html')
     async def landing(self, request):
-        return dict(exploits=[ex.display for ex in await self.data_svc.locate('exploits')])
+        trimmed = defaultdict(list)
+        for ex in await self.data_svc.locate('abilities', match=dict(tactic='initial-access', technique_name=('aux', 'exploit'))):
+            trimmed[ex.ability_id] = ex.name
+        return dict(exploits=dict(trimmed))

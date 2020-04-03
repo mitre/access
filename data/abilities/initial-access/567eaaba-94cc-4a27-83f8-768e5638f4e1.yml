@@ -1,0 +1,14 @@
+---
+- id: 567eaaba-94cc-4a27-83f8-768e5638f4e1
+  name: Run an NMAP scan
+  description: Scan an external host for open ports and services
+  tactic: initial-access
+  technique:
+    name: aux
+    attack_id: t0aux1
+  platforms:
+    darwin,linux:
+      sh:
+        command: |
+          ./scanmebaby.sh #{target.host} #{target.ports}
+        payload: scanmebaby.sh
