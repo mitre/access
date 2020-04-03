@@ -9,6 +9,12 @@
           host. The goal of each exploit is to either learn information about a remote host - or deploy an
           agent on it by exploiting a known vulnerability.
       </p>
+      <select id="pets">
+        <option disabled selected>Choose an agent</option>
+        {% for a in agents %}
+            <option value={{ a.paw }}>{{ a.host }}</option>
+        {% endfor %}}
+      </select>
       <select id="exploits" onchange="showProperties()">
         <option disabled selected>Choose an exploit</option>
         {% for k, v in exploits.items() %}
@@ -21,7 +27,7 @@
         <table id="exploit-properties" class="obfuscation-table" border=1 frame=void rules=rows></table>
       </div>
       <br>
-      <button id="exploitExploit" type="button" class="button-success atomic-button">Exploit</button>
+      <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Exploit</button>
 
     </div>
     <div class="column" style="flex:75%">
@@ -40,11 +46,27 @@
             }
             $('#exploit-properties').empty();
             $('#exploit-description').text(data[0].description);
+
             found.forEach(function(prop){
-                $('#exploit-properties').append('<tr><td style="font-size:12px;">'+prop+'</td><td><input type="text" placeholder="Required value" style="text-align:left;font-size:12px"/></td></tr>');
+                $('#exploit-properties').append('<tr><td style="font-size:12px;"><b>'+prop+'</b></td><td contenteditable="true" style="font-size:12px">Required value</td></tr>');
             });
         }
         let ability_id = $('#exploits option:selected').attr('value');
         restRequest('POST', {'index':'abilities', 'ability_id': ability_id}, propertiesCallback);
+    }
+
+    function runExploit(){
+        function runExploitCallback(data){
+            console.log(data);
+        }
+        let ability_id = $('#exploits option:selected').attr('value');
+        let facts = [];
+        $("#exploit-properties tr").each(function () {
+            let trait = $(this.cells[0]).text();
+            let value = $(this.cells[1]).text();
+            facts.push({'trait':trait,'value':value});
+        });
+      restRequest('POST', {'paw': $('#pets option:selected').attr('value'), 'ability_id': ability_id, 'facts': facts},
+              runExploitCallback, '/plugin/access/exploit');
     }
 </script>

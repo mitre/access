@@ -1,0 +1,14 @@
+---
+- id: d6aa3853-ecce-4d19-b598-51bb14bc4290
+  name: Exploit biz
+  description: Run a lot of exploit type of activities against a given computer system on a remote host
+  tactic: initial-access
+  technique:
+    name: exploit
+    attack_id: t0exploit1
+  platforms:
+    darwin,linux:
+      sh:
+        command: |
+          ./scanmebaby.sh #{target.host} #{target.ports} #{target.something} #{target.anotherthing}
+        payload: scanmebaby.sh
