@@ -6,18 +6,24 @@
       <h4 style="margin-bottom:-5px">Access</h4>
       <p class="section-description">
           Here you'll find exploits which are designed to initiate access on a remote
-          host. The goal of each exploit is to either learn information about a remote host - or deploy an
-          agent on it by exploiting a known vulnerability.
+          host. Select an agent to run the exploit, the exploit itself and a target agent to deploy, if successful.
+          Most exploits require a few properties to fill in - so fill these in.
       </p>
-      <select id="pets">
-        <option disabled selected>Choose an agent</option>
+      <select id="access-pets">
+        <option disabled selected>Choose a runner</option>
         {% for a in agents %}
             <option value={{ a.paw }}>{{ a.host }}</option>
         {% endfor %}}
       </select>
-      <select id="exploits" onchange="showProperties()">
+      <select id="access-exploits" onchange="showProperties()">
         <option disabled selected>Choose an exploit</option>
         {% for k, v in exploits.items() %}
+            <option value={{ k }}>{{ v }}</option>
+        {% endfor %}}
+      </select>
+      <select id="access-targets">
+        <option disabled selected>Choose a target</option>
+        {% for k, v in targets.items() %}
             <option value={{ k }}>{{ v }}</option>
         {% endfor %}}
       </select>
@@ -46,7 +52,7 @@
         function refreshCallback(data){
             console.log(data);
         }
-        let paw = $('#pets option:selected').attr('value');
+        let paw = $('#access-pets option:selected').attr('value');
         if(paw !== null) {
             restRequest('POST', {'index':'agents', 'paw': paw}, refreshCallback);
         }
@@ -66,22 +72,28 @@
                 $('#exploit-properties').append('<tr><td style="font-size:12px;"><b>'+prop+'</b></td><td contenteditable="true" style="font-size:12px">Required value</td></tr>');
             });
         }
-        let ability_id = $('#exploits option:selected').attr('value');
+        let ability_id = $('#access-exploits option:selected').attr('value');
         restRequest('POST', {'index':'abilities', 'ability_id': ability_id}, propertiesCallback);
     }
 
     function runExploit(){
-        function runExploitCallback(data){
-            stream('Exploit tasked!');
-        }
-        let ability_id = $('#exploits option:selected').attr('value');
-        let facts = [];
-        $("#exploit-properties tr").each(function () {
+      function runExploitCallback(data){
+          stream('Exploit tasked!');
+      }
+      let ability_id = $('#access-exploits option:selected').attr('value');
+      let facts = [];
+      $("#exploit-properties tr").each(function () {
             let trait = $(this.cells[0]).text();
             let value = $(this.cells[1]).text();
             facts.push({'trait':trait,'value':value});
-        });
-      restRequest('POST', {'paw': $('#pets option:selected').attr('value'), 'ability_id': ability_id, 'facts': facts},
-              runExploitCallback, '/plugin/access/exploit');
+      });
+      let paw = $('#access-pets option:selected').attr('value');
+      let target = $('#access-targets option:selected').attr('value');
+      if(paw == null || target == null || ability_id == null) {
+          alert('Missing requirement!');
+      } else {
+          let data = {'paw': paw, 'target': target, 'ability_id': ability_id, 'facts': facts};
+          restRequest('POST', data, runExploitCallback, '/plugin/access/exploit');
+      }
     }
 </script>

@@ -16,10 +16,14 @@ class AccessApi:
     @check_authorization
     @template('access.html')
     async def landing(self, request):
-        trimmed = defaultdict(list)
-        for ex in await self.data_svc.locate('abilities', dict(tactic='initial-access', technique_name=('aux', 'exploit'))):
-            trimmed[ex.ability_id] = ex.name
-        return dict(exploits=dict(trimmed), agents=[a.display for a in await self.data_svc.locate('agents')])
+        exploits, targets = defaultdict(list), defaultdict(list)
+        for i in await self.data_svc.locate('abilities', dict(tactic='initial-access')):
+            exploits[i.ability_id] = i.name
+        for i in await self.data_svc.locate('abilities', dict(tactic='command-and-control')):
+            targets[i.ability_id] = i.name
+        return dict(exploits=dict(exploits),
+                    agents=[a.display for a in await self.data_svc.locate('agents')],
+                    targets=dict(targets))
 
     @check_authorization
     async def exploit(self, request):
