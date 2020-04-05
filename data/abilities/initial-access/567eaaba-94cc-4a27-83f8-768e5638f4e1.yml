@@ -10,5 +10,5 @@
     darwin,linux:
       sh:
         command: |
-          ./scanmebaby.sh #{target.host} #{target.ports}
+          ./scanmebaby.sh #{target.ip} #{target.ports}
         payload: scanmebaby.sh

@@ -1,0 +1,14 @@
+.exploit-box {
+    position: relative;
+    background-color: var(--primary-background);
+    width: 25%;
+    color: white;
+    min-height:250px;
+    border-radius: 5px;
+}
+.exploit-box img {
+    margin-top: 25px;
+    border: 2px solid white;
+    height: 35px;
+    border-radius: 50%;
+}

@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="/access/css/access.css">
+
 <div id="access" class="section-profile">
   <div class="row">
     <div class="topleft duk-icon"><img onclick="removeSection('access')" src="/gui/img/x.png"></div>
@@ -9,7 +11,7 @@
           host. Select an agent to run the exploit, the exploit itself and a target agent to deploy, if successful.
           Most exploits require a few properties to fill in - so fill these in.
       </p>
-      <select id="access-pets">
+      <select id="access-pets" onchange="refresh()">
         <option disabled selected>Choose a runner</option>
         {% for a in agents %}
             <option value={{ a.paw }}>{{ a.host }}</option>
@@ -21,12 +23,13 @@
             <option value={{ k }}>{{ v }}</option>
         {% endfor %}}
       </select>
-      <select id="access-targets">
-        <option disabled selected>Choose a target</option>
+      <select id="access-payloads">
+        <option disabled selected>Choose a payload</option>
         {% for k, v in targets.items() %}
             <option value={{ k }}>{{ v }}</option>
         {% endfor %}}
       </select>
+      <input id="access-target" class="queueOption" placeholder="Enter a target IP address"/>
       <br><br>
       <div>
         <i><p id="exploit-description" style="margin-right:20px;"></p></i>
@@ -34,13 +37,19 @@
       </div>
       <br>
       <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Exploit</button>
-
     </div>
     <div class="column" style="flex:75%">
-
+        <ul id="exploits" class="profile-tests"></ul>
     </div>
   </div>
 </div>
+
+<li id="exploit-template" class="exploit-box" style="display: none">
+    <center>
+        <img src="/access/img/locked.png"/>
+        <h3 id="exploit-name"></h3>
+    </center>
+</li>
 
 <script>
     let refresher = setInterval(refresh, 10000);
@@ -50,7 +59,13 @@
 
     function refresh(){
         function refreshCallback(data){
-            console.log(data);
+            $('#exploits').empty();
+            data[0].links.forEach(function(link) {
+                let template = $("#exploit-template").clone();
+                template.find('#exploit-name').text(link.ability_id);
+                template.show();
+                $('#exploits').append(template);
+            });
         }
         let paw = $('#access-pets option:selected').attr('value');
         if(paw !== null) {
@@ -69,7 +84,8 @@
             $('#exploit-description').text(data[0].description);
 
             found.forEach(function(prop){
-                $('#exploit-properties').append('<tr><td style="font-size:12px;"><b>'+prop+'</b></td><td contenteditable="true" style="font-size:12px">Required value</td></tr>');
+                if(prop !== 'target.ip')
+                    $('#exploit-properties').append('<tr><td style="font-size:12px;"><b>'+prop+'</b></td><td contenteditable="true" style="font-size:12px">Required value</td></tr>');
             });
         }
         let ability_id = $('#access-exploits option:selected').attr('value');
@@ -88,11 +104,13 @@
             facts.push({'trait':trait,'value':value});
       });
       let paw = $('#access-pets option:selected').attr('value');
-      let target = $('#access-targets option:selected').attr('value');
-      if(paw == null || target == null || ability_id == null) {
+      let payload = $('#access-payloads option:selected').attr('value');
+      let target = $('#access-target').val();
+      if(paw == null || payload == null || ability_id == null || target == null) {
           alert('Missing requirement!');
       } else {
-          let data = {'paw': paw, 'target': target, 'ability_id': ability_id, 'facts': facts};
+          facts.push({'trait': 'target.ip', 'value': target});
+          let data = {'paw': paw, 'payload': payload, 'ability_id': ability_id, 'facts': facts};
           restRequest('POST', data, runExploitCallback, '/plugin/access/exploit');
       }
     }
