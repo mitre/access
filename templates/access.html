@@ -46,8 +46,9 @@
 
 <li id="exploit-template" class="exploit-box" style="display: none">
     <center>
-        <img src="/access/img/locked.png"/>
+        <img id="exploit-image" src="/access/img/locked.png"/>
         <h3 id="exploit-name"></h3>
+        <br>
     </center>
 </li>
 
@@ -61,8 +62,12 @@
         function refreshCallback(data){
             $('#exploits').empty();
             data[0].links.forEach(function(link) {
+                console.log(link);
                 let template = $("#exploit-template").clone();
-                template.find('#exploit-name').text(link.ability_id);
+                template.find('#exploit-name').text(link.ability.name);
+                if(link.status === 0) {
+                    template.find('#exploit-image').attr('src', '/access/img/unlocked.png');
+                }
                 template.show();
                 $('#exploits').append(template);
             });
