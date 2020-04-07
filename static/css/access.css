@@ -1,16 +1,19 @@
 .exploit-box {
     position: relative;
     background-color: var(--primary-background);
-    width: 25%;
+    width: 15%;
     color: white;
     border-radius: 5px;
 }
 .exploit-box img {
-    margin-top: 25px;
+    margin-top: 15px;
     border: 2px solid white;
     height: 35px;
     border-radius: 50%;
     margin-bottom: 0;
+}
+.exploit-box p {
+    margin-top: 10px;
 }
 .exploit-box h3 {
     font-size: 18px;

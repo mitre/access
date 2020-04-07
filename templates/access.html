@@ -8,7 +8,7 @@
       <h4 style="margin-bottom:-5px">Access</h4>
       <p class="section-description">
           Here you'll find exploits which are designed to initiate access on a remote
-          host. Select an agent to run the exploit and the exploit itself.
+          host. Select an agent to run the exploit and the exploit itself to fill in the details associated to it.
       </p>
       <select id="access-pets" onchange="refresh()">
         <option disabled selected>Choose a runner</option>
@@ -33,9 +33,10 @@
 
 <li id="exploit-template" class="exploit-box" style="display: none">
     <center>
-        <img id="exploit-image" src="/access/img/locked.png"/>
-        <h3 id="exploit-name"></h3>
-        <br>
+        <img id="exploit-image"/>
+        <p id="exploit-status"></p>
+        <h4 id="exploit-name"></h4>
+        <p id="exploit-result"></p>
     </center>
 </li>
 
@@ -74,13 +75,26 @@
         function refreshCallback(data){
             $('#exploits').empty();
             data[0].links.forEach(function(link) {
-                let template = $("#exploit-template").clone();
-                template.find('#exploit-name').text(link.ability.name);
-                if(link.status === 0) {
-                    template.find('#exploit-image').attr('src', '/access/img/unlocked.png');
+                if(link.ability.tactic === 'initial-access') {
+                    let template = $("#exploit-template").clone();
+                    template.find('#exploit-name').text(link.ability.name);
+                    if (link.status === 0) {
+                        template.find('#exploit-status').text('SUCCESS');
+                        template.find('#exploit-image').attr('src', '/access/img/unlocked.png');
+                    } else if (link.status > 0) {
+                        template.find('#exploit-status').text('FAILED');
+                        template.find('#exploit-image').attr('src', '/access/img/locked.png');
+                    } else {
+                        template.find('#exploit-status').text('IN-PROGRESS');
+                        template.find('#exploit-result').html('&#9733;');
+                        $("#exploit-result").click(function(){
+                            alert(link.unique);
+                        });
+                        template.find('#exploit-image').attr('src', '/access/img/progress-lock.png');
+                    }
+                    template.show();
+                    $('#exploits').append(template);
                 }
-                template.show();
-                $('#exploits').append(template);
             });
         }
         let paw = $('#access-pets option:selected').attr('value');
@@ -123,11 +137,10 @@
             facts.push({'trait':trait,'value':value});
       });
       let paw = $('#access-pets option:selected').attr('value');
-      let payload = $('#access-payloads option:selected').attr('value');
-      if(paw == null || payload == null || ability_id == null || target == null) {
+      if(paw == null || ability_id == null) {
           alert('Missing requirement!');
       } else {
-          let data = {'paw': paw, 'payload': payload, 'ability_id': ability_id, 'facts': facts};
+          let data = {'paw': paw, 'ability_id': ability_id, 'facts': facts};
           restRequest('POST', data, runExploitCallback, '/plugin/access/exploit');
       }
     }
