@@ -8,8 +8,7 @@
       <h4 style="margin-bottom:-5px">Access</h4>
       <p class="section-description">
           Here you'll find exploits which are designed to initiate access on a remote
-          host. Select an agent to run the exploit, the exploit itself and a target agent to deploy, if successful.
-          Most exploits require a few properties to fill in - so fill these in.
+          host. Select an agent to run the exploit and the exploit itself.
       </p>
       <select id="access-pets" onchange="refresh()">
         <option disabled selected>Choose a runner</option>
@@ -23,18 +22,6 @@
             <option value={{ k }}>{{ v }}</option>
         {% endfor %}}
       </select>
-      <select id="access-payloads">
-        <option disabled selected>Choose a payload</option>
-        {% for k, v in targets.items() %}
-            <option value={{ k }}>{{ v }}</option>
-        {% endfor %}}
-      </select>
-      <input id="access-target" class="queueOption" placeholder="Enter a target IP address"/>
-      <br><br>
-      <div>
-        <i><p id="exploit-description" style="margin-right:20px;"></p></i>
-        <table id="exploit-properties" class="obfuscation-table" border=1 frame=void rules=rows></table>
-      </div>
       <br>
       <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Exploit</button>
     </div>
@@ -52,6 +39,31 @@
     </center>
 </li>
 
+<div id="properties-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('properties-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:100%">
+                    <center>
+                        <h4 id="exploit-description" style="margin-top:2px;text-align:center"></h4>
+                        <ul id="exploit-properties"></ul>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<li id="property-template" class="row-simple" style="display: none;list-style-type:none">
+    <table class="obfuscation-table" border=1 rules=rows>
+        <tr>
+            <td style="width:50%"><p id="exploit-trait"></p></td>
+            <td style="width:50%"><p id="exploit-value" contenteditable="true">Required value</p></td>
+        </tr>
+    </table>
+</li>
+
 <script>
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
@@ -62,7 +74,6 @@
         function refreshCallback(data){
             $('#exploits').empty();
             data[0].links.forEach(function(link) {
-                console.log(link);
                 let template = $("#exploit-template").clone();
                 template.find('#exploit-name').text(link.ability.name);
                 if(link.status === 0) {
@@ -73,7 +84,7 @@
             });
         }
         let paw = $('#access-pets option:selected').attr('value');
-        if(paw !== null) {
+        if(paw != null) {
             restRequest('POST', {'index':'agents', 'paw': paw}, refreshCallback);
         }
     }
@@ -89,9 +100,12 @@
             $('#exploit-description').text(data[0].description);
 
             found.forEach(function(prop){
-                if(prop !== 'target.ip')
-                    $('#exploit-properties').append('<tr><td style="font-size:12px;"><b>'+prop+'</b></td><td contenteditable="true" style="font-size:12px">Required value</td></tr>');
+                let template = $("#property-template").clone();
+                template.find('#exploit-trait').text(prop);
+                template.show();
+                $('#exploit-properties').append(template);
             });
+            document.getElementById("properties-modal").style.display = "block";
         }
         let ability_id = $('#access-exploits option:selected').attr('value');
         restRequest('POST', {'index':'abilities', 'ability_id': ability_id}, propertiesCallback);
@@ -110,11 +124,9 @@
       });
       let paw = $('#access-pets option:selected').attr('value');
       let payload = $('#access-payloads option:selected').attr('value');
-      let target = $('#access-target').val();
       if(paw == null || payload == null || ability_id == null || target == null) {
           alert('Missing requirement!');
       } else {
-          facts.push({'trait': 'target.ip', 'value': target});
           let data = {'paw': paw, 'payload': payload, 'ability_id': ability_id, 'facts': facts};
           restRequest('POST', data, runExploitCallback, '/plugin/access/exploit');
       }
