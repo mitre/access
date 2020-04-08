@@ -13,12 +13,13 @@ class AccessApi:
         self.data_svc = services.get('data_svc')
         self.rest_svc = services.get('rest_svc')
         self.auth_svc = services.get('auth_svc')
+        self.exploit_tactics = ('initial-access', 'technical-information-gathering')
 
     @check_authorization
     @template('access.html')
     async def landing(self, request):
         exploits = defaultdict(list)
-        for i in await self.data_svc.locate('abilities', dict(tactic='initial-access')):
+        for i in await self.data_svc.locate('abilities', dict(tactic=self.exploit_tactics)):
             exploits[i.ability_id] = i.name
         return dict(exploits=dict(exploits), agents=[a.display for a in await self.data_svc.locate('agents')])
 
