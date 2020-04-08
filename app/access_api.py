@@ -3,6 +3,7 @@ from collections import defaultdict
 from aiohttp import web
 from aiohttp_jinja2 import template
 
+from app.objects.secondclass.c_fact import Fact
 from app.service.auth_svc import check_authorization
 
 
@@ -24,5 +25,6 @@ class AccessApi:
     @check_authorization
     async def exploit(self, request):
         data = dict(await request.json())
-        await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'])
+        converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts')]
+        await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], converted_facts)
         return web.json_response('complete')

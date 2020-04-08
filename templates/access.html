@@ -81,15 +81,17 @@
                     if (link.status === 0) {
                         template.find('#exploit-status').text('SUCCESS');
                         template.find('#exploit-image').attr('src', '/access/img/unlocked.png');
+                        template.find('#exploit-result').html('&#9733;').click(function(){
+                            fetchResult(link);
+                        });
                     } else if (link.status > 0) {
                         template.find('#exploit-status').text('FAILED');
                         template.find('#exploit-image').attr('src', '/access/img/locked.png');
+                        template.find('#exploit-result').html('&#9733;').click(function(){
+                            fetchResult(link);
+                        });
                     } else {
                         template.find('#exploit-status').text('IN-PROGRESS');
-                        template.find('#exploit-result').html('&#9733;');
-                        $("#exploit-result").click(function(){
-                            alert(link.unique);
-                        });
                         template.find('#exploit-image').attr('src', '/access/img/progress-lock.png');
                     }
                     template.show();
@@ -143,5 +145,13 @@
           let data = {'paw': paw, 'ability_id': ability_id, 'facts': facts};
           restRequest('POST', data, runExploitCallback, '/plugin/access/exploit');
       }
+    }
+
+    function fetchResult(link) {
+        function loadResult(data) {
+            document.getElementById('alert-modal').style.display='block';
+            $('#alert-text').html(atob(data.output));
+        }
+        restRequest('POST', {'index':'result','link_id':link.unique}, loadResult);
     }
 </script>
