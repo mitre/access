@@ -8,7 +8,9 @@
       <h4 style="margin-bottom:-5px">Access</h4>
       <p class="section-description">
           Here you'll find exploits which are designed to initiate access on a remote
-          host. Select an agent to run the exploit and the exploit itself to fill in the details associated to it.
+          host or execute pre-ATT&CK abilities. Select an agent to run the exploit and the ability itself to fill in the
+          details associated to it. To the right, you'll see every ability tasked to an agent, outside the scope of an
+          operation. Click the &#9733; to view the output of any exploit.
       </p>
       <select id="access-pets" onchange="refresh()">
         <option disabled selected>Choose a runner</option>
@@ -23,7 +25,7 @@
         {% endfor %}}
       </select>
       <br>
-      <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Exploit</button>
+      <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Run</button>
     </div>
     <div class="column" style="flex:75%">
         <ul id="exploits" class="profile-tests"></ul>
@@ -33,10 +35,13 @@
 
 <li id="exploit-template" class="exploit-box" style="display: none">
     <center>
+        <div class="exploit-banner">
+            <p id="exploit-tactic"></p>
+        </div>
         <img id="exploit-image"/>
         <p id="exploit-status"></p>
         <h4 id="exploit-name"></h4>
-        <p id="exploit-result"></p>
+        <p id="exploit-result">&nbsp;</p>
     </center>
 </li>
 
@@ -76,19 +81,22 @@
             $('#exploits').empty();
             data[0].links.forEach(function(link) {
                 let template = $("#exploit-template").clone();
+                template.find('#exploit-tactic').text(link.ability.tactic);
                 template.find('#exploit-name').text(link.ability.name);
                 if (link.status === 0) {
                     template.find('#exploit-status').text('SUCCESS');
                     template.find('#exploit-image').attr('src', '/access/img/unlocked.png');
-                    template.find('#exploit-result').html('&#9733;').click(function(){
-                        fetchResult(link);
-                    });
+                    if(link.output)
+                        template.find('#exploit-result').html('&#9733;').click(function(){
+                            fetchResult(link);
+                        });
                 } else if (link.status > 0) {
                     template.find('#exploit-status').text('FAILED');
                     template.find('#exploit-image').attr('src', '/access/img/locked.png');
-                    template.find('#exploit-result').html('&#9733;').click(function(){
-                        fetchResult(link);
-                    });
+                    if(link.output)
+                        template.find('#exploit-result').html('&#9733;').click(function(){
+                            fetchResult(link);
+                        });
                 } else {
                     template.find('#exploit-status').text('IN-PROGRESS');
                     template.find('#exploit-image').attr('src', '/access/img/progress-lock.png');
