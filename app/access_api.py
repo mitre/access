@@ -1,54 +1,31 @@
+from collections import defaultdict
+
 from aiohttp import web
 from aiohttp_jinja2 import template
 
 from app.objects.secondclass.c_fact import Fact
-from plugins.access.app.red.red_clone import RedClone
-from plugins.access.app.red.red_usb import RedUsb
+from app.service.auth_svc import check_authorization
 
 
 class AccessApi:
 
-    def __init__(self, services, props):
-        self.app_svc = services.get('app_svc')
+    def __init__(self, services):
         self.data_svc = services.get('data_svc')
-        self.props = props
+        self.rest_svc = services.get('rest_svc')
+        self.auth_svc = services.get('auth_svc')
+        self.exploit_tactics = ('initial-access', 'technical-information-gathering')
 
+    @check_authorization
     @template('access.html')
     async def landing(self, request):
-        full_cloned_url = '%s%s' % (request.host, self.props.get('clone_url'))
-        sources = [s.display for s in await self.data_svc.locate('sources')]
-        return dict(sources=sources,
-                    clone_url=full_cloned_url,
-                    clone_site=self.props.get('clone_site'),
-                    clone_payload=self.props.get('clone_payload'))
+        exploits = defaultdict(list)
+        for i in await self.data_svc.locate('abilities', dict(tactic=self.exploit_tactics)):
+            exploits[i.ability_id] = i.name
+        return dict(exploits=dict(exploits), agents=[a.display for a in await self.data_svc.locate('agents')])
 
-    @staticmethod
-    async def malicious(request):
-        return web.HTTPFound('/access/malicious/index.html')
-
-    async def clone(self, request):
-        body = await request.json()
-        self.props['clone_site'] = body['clone_site']
-        self.props['inject_payload'] = body['inject_payload']
-        self.props['inject_keylogger'] = body['inject_keylogger']
-        self.props['assigned_source'] = body['source']
-        await RedClone().action(body['clone_site'], self.props)
-        return web.json_response(dict(clone_site=self.props['clone_site']))
-
-    async def usb(self, request):
-        body = await request.json()
-        usb_logs = await RedUsb().action(body['server'], body['drive'], body['platform'])
-        return web.json_response(dict(usb_logs=usb_logs))
-
-    async def key_log(self, request):
-        body = await request.json()
-        await self._parse_key_logger(blob=body['log'])
-        return web.HTTPOk()
-
-    """ PRIVATE """
-
-    async def _parse_key_logger(self, blob):
-        creds = blob.split('Tab')
-        source = await self.data_svc.locate('sources', match=dict(name=self.props['assigned_source']))
-        source[0].facts.append(Fact(trait='host.user.name', value=creds[0]))
-        source[0].facts.append(Fact(trait='host.user.password', value=creds[1]))
+    @check_authorization
+    async def exploit(self, request):
+        data = dict(await request.json())
+        converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts')]
+        await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], converted_facts)
+        return web.json_response('complete')

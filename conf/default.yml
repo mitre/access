@@ -1,8 +1,0 @@
----
-
-clone_site: https://example.com
-clone_url: /drive-by
-clone_payload: sandcat.go
-inject_payload: 0
-inject_keylogger: 0
-assigned_source: basic
