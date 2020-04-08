@@ -12,18 +12,14 @@
           details associated to it. To the right, you'll see every ability tasked to an agent, outside the scope of an
           operation. Click the &#9733; to view the output of any exploit.
       </p>
-      <select id="access-pets" onchange="refresh()">
+      <select id="access-pets" onchange="refresh();populateExploits()">
         <option disabled selected>Choose a runner</option>
         {% for a in agents %}
-            <option value={{ a.paw }}>{{ a.host }} - {{ a.paw }}</option>
+            <option value={{ a.paw }} data-executors={{ a.executors }}>{{ a.host }} - {{ a.paw }}</option>
         {% endfor %}}
       </select>
-      <select id="access-exploits" onchange="showProperties()">
-        <option disabled selected>Choose an exploit</option>
-        {% for k, v in exploits.items() %}
-            <option value={{ k }}>{{ v }}</option>
-        {% endfor %}}
-      </select>
+      <input class="queueOption" type="text" placeholder="Filter abilities"/>
+      <select id="access-exploits" onchange="showProperties()"></select>
       <br>
       <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Run</button>
     </div>
@@ -162,5 +158,20 @@
         }
         modal.html('');
         restRequest('POST', {'index':'result','link_id':link.unique}, loadResult);
+    }
+
+    function populateExploits(){
+        let exploitList = $('#access-exploits');
+        function appendAbilities(data) {
+            exploitList.empty();
+            data.forEach(function(ability){
+                exploitList.append($("<option></option>")
+                    .attr("value", ability['ability_id'])
+                    .text(ability['name']));
+            });
+            exploitList.prepend("<option disabled='disabled' selected>-- select an ability --</option>");
+        }
+        let paw = $('#access-pets option:selected').attr('value');
+        restRequest('POST', {'paw':paw}, appendAbilities, '/plugin/access/abilities');
     }
 </script>
