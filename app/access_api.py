@@ -17,7 +17,8 @@ class AccessApi:
     @check_authorization
     @template('access.html')
     async def landing(self, request):
-        return dict(agents=[a.display for a in await self.data_svc.locate('agents')])
+        search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        return dict(agents=[a.display for a in await self.data_svc.locate('agents', match=search)])
 
     @check_authorization
     async def exploit(self, request):
@@ -28,8 +29,9 @@ class AccessApi:
 
     @check_authorization
     async def abilities(self, request):
+        search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         data = dict(await request.json())
         agent = (await self.data_svc.locate('agents', dict(paw=data['paw'])))[0]
         abilities_by_executor = [await self.data_svc.locate('abilities', dict(executor=ex)) for ex in agent.executors]
         capable_abilities = await agent.capabilities(list(itertools.chain.from_iterable(abilities_by_executor)))
-        return web.json_response([x.display for x in capable_abilities])
+        return web.json_response([x.display for x in capable_abilities if x.access in search['access']])
