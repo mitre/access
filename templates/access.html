@@ -12,11 +12,14 @@
           details associated to it. To the right, you'll see every ability tasked to an agent, outside the scope of an
           operation. Click the &#9733; to view the output of any exploit.
       </p>
-      <select id="access-pets" onchange="refresh();populateExploits()">
+      <select id="access-pets" onchange="refresh();">
         <option disabled selected>Choose a runner</option>
         {% for a in agents %}
             <option value={{ a.paw }} data-executors={{ a.executors }}>{{ a.host }} - {{ a.paw }}</option>
         {% endfor %}}
+      </select>
+      <select id="access-tactics" onchange="populateExploits()">
+          <option disabled='disabled' selected>-- select a tactic --</option>
       </select>
       <select id="access-exploits" onchange="showProperties()">
           <option disabled='disabled' selected>-- select an ability --</option>
