@@ -13,3 +13,4 @@ async def enable(services):
     app.router.add_static('/access', 'plugins/access/static', append_version=True)
     app.router.add_route('GET', '/plugin/access/gui', access_api.landing)
     app.router.add_route('POST', '/plugin/access/exploit', access_api.exploit)
+    app.router.add_route('POST', '/plugin/access/abilities', access_api.abilities)

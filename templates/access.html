@@ -12,17 +12,14 @@
           details associated to it. To the right, you'll see every ability tasked to an agent, outside the scope of an
           operation. Click the &#9733; to view the output of any exploit.
       </p>
-      <select id="access-pets" onchange="refresh()">
+      <select id="access-pets" onchange="refresh();populateExploits()">
         <option disabled selected>Choose a runner</option>
         {% for a in agents %}
-            <option value={{ a.paw }}>{{ a.host }} - {{ a.paw }}</option>
+            <option value={{ a.paw }} data-executors={{ a.executors }}>{{ a.host }} - {{ a.paw }}</option>
         {% endfor %}}
       </select>
       <select id="access-exploits" onchange="showProperties()">
-        <option disabled selected>Choose an exploit</option>
-        {% for k, v in exploits.items() %}
-            <option value={{ k }}>{{ v }}</option>
-        {% endfor %}}
+          <option disabled='disabled' selected>-- select an ability --</option>
       </select>
       <br>
       <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Run</button>
@@ -46,15 +43,18 @@
 </li>
 
 <div id="properties-modal" class="modal">
-    <form class="modal-content" style="width:50%;">
+    <form class="modal-content" style="width:90%;">
         <div class="container modal-box">
             <div class="row ability-viewer">
-                <span onclick="document.getElementById('properties-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                 <div class="column" style="flex:100%">
                     <center>
+                        <p style="text-align: center;font-size:11px;margin-top:-10px;margin-bottom:25px">
+                            Please review the exploit details and click OK. Ensure all properties have valid values (replace the dashes).
+                        </p>
                         <h4 id="exploit-description" style="margin-top:2px;text-align:center"></h4>
                         <ul id="exploit-properties"></ul>
                     </center>
+                    <div class="div-button" onclick="document.getElementById('properties-modal').style.display='none'">OK</div>
                 </div>
             </div>
         </div>
@@ -65,12 +65,16 @@
     <table class="obfuscation-table" border=1 rules=rows>
         <tr>
             <td style="width:50%"><p id="exploit-trait"></p></td>
-            <td style="width:50%"><p id="exploit-value" contenteditable="true">Required value</p></td>
+            <td style="width:50%"><p id="exploit-value" contenteditable="true">-</p></td>
         </tr>
     </table>
 </li>
 
 <script>
+    $(document).ready(function () {
+        stream('Deploy an agent locally to conduct initial access... or remotely to disguise your attacks');
+    });
+
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
@@ -162,5 +166,20 @@
         }
         modal.html('');
         restRequest('POST', {'index':'result','link_id':link.unique}, loadResult);
+    }
+
+    function populateExploits(){
+        let exploitList = $('#access-exploits');
+        function appendAbilities(data) {
+            exploitList.empty();
+            data.forEach(function(ability){
+                exploitList.append($("<option></option>")
+                    .attr("value", ability['ability_id'])
+                    .text(ability['name']));
+            });
+            exploitList.prepend("<option disabled='disabled' selected>-- select an ability --</option>");
+        }
+        let paw = $('#access-pets option:selected').attr('value');
+        restRequest('POST', {'paw':paw}, appendAbilities, '/plugin/access/abilities');
     }
 </script>
