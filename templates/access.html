@@ -72,6 +72,10 @@
 </li>
 
 <script>
+    $(document).ready(function () {
+        stream('Deploy an agent locally to conduct initial access... or remotely to disguise your attacks');
+    });
+
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
