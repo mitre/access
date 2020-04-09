@@ -34,3 +34,13 @@
     font-size: 11px;
     margin: 2px;
 }
+.div-button {
+    float:right;
+    right: 50px;
+    width:60px;
+    margin-top: 25px;
+    margin-bottom: -25px;
+    background-color: green;
+    border-radius: 10px;
+    padding: 8px;
+}

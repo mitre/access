@@ -18,8 +18,9 @@
             <option value={{ a.paw }} data-executors={{ a.executors }}>{{ a.host }} - {{ a.paw }}</option>
         {% endfor %}}
       </select>
-      <input class="queueOption" type="text" placeholder="Filter abilities"/>
-      <select id="access-exploits" onchange="showProperties()"></select>
+      <select id="access-exploits" onchange="showProperties()">
+          <option disabled='disabled' selected>-- select an ability --</option>
+      </select>
       <br>
       <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Run</button>
     </div>
@@ -42,15 +43,19 @@
 </li>
 
 <div id="properties-modal" class="modal">
-    <form class="modal-content" style="width:50%;">
+    <form class="modal-content" style="width:90%;">
         <div class="container modal-box">
             <div class="row ability-viewer">
-                <span onclick="document.getElementById('properties-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                 <div class="column" style="flex:100%">
                     <center>
+                        <p style="width:70%;font-size:11px;margin-top:-10px;margin-bottom:25px">
+                            Please review the exploit details and click OK. The table contains facts which are
+                            required for the exploit to run. Replace the dash with a valid value.
+                        </p>
                         <h4 id="exploit-description" style="margin-top:2px;text-align:center"></h4>
                         <ul id="exploit-properties"></ul>
                     </center>
+                    <div class="div-button" onclick="document.getElementById('properties-modal').style.display='none'">OK</div>
                 </div>
             </div>
         </div>
@@ -61,7 +66,7 @@
     <table class="obfuscation-table" border=1 rules=rows>
         <tr>
             <td style="width:50%"><p id="exploit-trait"></p></td>
-            <td style="width:50%"><p id="exploit-value" contenteditable="true">Required value</p></td>
+            <td style="width:50%"><p id="exploit-value" contenteditable="true">-</p></td>
         </tr>
     </table>
 </li>
