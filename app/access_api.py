@@ -18,8 +18,10 @@ class AccessApi:
     @template('access.html')
     async def landing(self, request):
         search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        abilities = await self.data_svc.locate('abilities', match=search)
+        tactics = sorted(list(set(a.tactic.lower() for a in abilities)))
         return dict(agents=[a.display for a in await self.data_svc.locate('agents', match=search)],
-                    abilities=[a.display for a in await self.data_svc.locate('abilities', match=search)])
+                    abilities=[a.display for a in abilities], tactics=tactics)
 
     @check_authorization
     async def exploit(self, request):

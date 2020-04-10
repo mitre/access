@@ -34,6 +34,14 @@
     font-size: 11px;
     margin: 2px;
 }
+.exploit-exploit {
+    width: 70%;
+    overflow: hidden;
+}
+.exploit-exploit pre {
+    padding: 2px;
+    text-align: left;
+}
 .div-button {
     float:right;
     right: 50px;
