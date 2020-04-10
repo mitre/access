@@ -7,19 +7,30 @@
       <img src="/access/img/access.png">
       <h4 style="margin-bottom:-5px">Access</h4>
       <p class="section-description">
-          Here you'll find exploits which are designed to initiate access on a remote
-          host or execute pre-ATT&CK abilities. Select an agent to run the exploit and the ability itself to fill in the
-          details associated to it. To the right, you'll see every ability tasked to an agent, outside the scope of an
-          operation. Click the &#9733; to view the output of any exploit.
+          Here you can task any agent with any ability from the database - outside the scope of an operation. This is
+          especially useful for conducting initial access attacks. To do this, deploy an agent locally and task it
+          with either pre-ATT&CK or initial access tactics, pointed at any target. You can even deploy an agent
+          remotely and use it as a proxy to conduct your initial access attacks. To the right, you'll see every
+          ability directly tasked to an agent. Click the &#9733; to view the output.
       </p>
-      <select id="access-pets" onchange="refresh();populateExploits()">
+      <select id="access-pets" onchange="refresh();">
         <option disabled selected>Choose a runner</option>
         {% for a in agents %}
-            <option value={{ a.paw }} data-executors={{ a.executors }}>{{ a.host }} - {{ a.paw }}</option>
+            <option value={{ a.paw }}>{{ a.host }} - {{ a.paw }}</option>
         {% endfor %}}
       </select>
-      <select id="access-exploits" onchange="showProperties()">
-          <option disabled='disabled' selected>-- select an ability --</option>
+      <input id="ability-search-filter" style="width:75%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('access-sidebar', {{ abilities }});">
+      <select id="ability-tactic-filter" onchange="populateTechniques('access-sidebar', {{ abilities | sort(attribute='technique_id') }});">
+          <option disabled selected>Choose a tactic</option>
+            {% for tactic in tactics %}
+                <option value={{ tactic }} data-tactic={{ tactic }}>{{ tactic }}</option>
+            {% endfor %}}
+      </select>
+      <select id="ability-technique-filter" onchange="populateAbilities('access-sidebar', {{ abilities | sort(attribute='name') }});">
+          <option disabled selected>Choose a technique</option>
+      </select>
+      <select id="ability-ability-filter" onchange="showProperties()">
+          <option disabled selected>0 abilities</option>
       </select>
       <br>
       <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Run</button>
@@ -48,10 +59,14 @@
             <div class="row ability-viewer">
                 <div class="column" style="flex:100%">
                     <center>
-                        <p style="text-align: center;font-size:11px;margin-top:-10px;margin-bottom:25px">
-                            Please review the exploit details and click OK. Ensure all properties have valid values (replace the dashes).
+                        <p style="text-align: center;font-size:12px;margin-top:-10px;margin-bottom:25px">
+                            Please review the ability details and click OK. If the ability has properties, ensure they have valid values.
                         </p>
                         <h4 id="exploit-description" style="margin-top:2px;text-align:center"></h4>
+                        <div class="exploit-exploit">
+                            <pre id="exploit-exploit"></pre>
+                        </div>
+                        <br>
                         <ul id="exploit-properties"></ul>
                     </center>
                     <div class="div-button" onclick="document.getElementById('properties-modal').style.display='none'">OK</div>
@@ -70,9 +85,10 @@
     </table>
 </li>
 
+<script src="/gui/js/ability.js"></script>
 <script>
     $(document).ready(function () {
-        stream('Deploy an agent locally to conduct initial access... or remotely to disguise your attacks');
+        stream('An agent is not necessarily deployed in a target network - it can run server-side as your assistant');
     });
 
     let refresher = setInterval(refresh, 10000);
@@ -124,6 +140,7 @@
             }
             $('#exploit-properties').empty();
             $('#exploit-description').text(data[0].description);
+            $('#exploit-exploit').text(atob(data[0].test));
 
             found.forEach(function(prop){
                 let template = $("#property-template").clone();
@@ -133,8 +150,8 @@
             });
             document.getElementById("properties-modal").style.display = "block";
         }
-        let ability_id = $('#access-exploits option:selected').attr('value');
-        restRequest('POST', {'index':'abilities', 'ability_id': ability_id}, propertiesCallback);
+        let ability = $('#ability-ability-filter option:selected').data('ability');
+        restRequest('POST', {'index':'abilities', 'ability_id': ability.ability_id}, propertiesCallback);
     }
 
     function runExploit(){
@@ -142,7 +159,7 @@
           stream('Exploit tasked!');
           refresh();
       }
-      let ability_id = $('#access-exploits option:selected').attr('value');
+      let ability = $('#ability-ability-filter option:selected').data('ability');
       let facts = [];
       $("#exploit-properties tr").each(function () {
             let trait = $(this.cells[0]).text();
@@ -150,10 +167,10 @@
             facts.push({'trait':trait,'value':value});
       });
       let paw = $('#access-pets option:selected').attr('value');
-      if(paw == null || ability_id == null) {
+      if(paw == null || ability.ability_id == null) {
           alert('Missing requirement!');
       } else {
-          let data = {'paw': paw, 'ability_id': ability_id, 'facts': facts};
+          let data = {'paw': paw, 'ability_id': ability.ability_id, 'facts': facts};
           restRequest('POST', data, runExploitCallback, '/plugin/access/exploit');
       }
     }
@@ -162,24 +179,9 @@
         let modal = $('#alert-text');
         function loadResult(data) {
             document.getElementById('alert-modal').style.display='block';
-            modal.html('<pre>'+atob(data.output)+'</pre>');
+            modal.html('<pre style="font-size:15px;">'+atob(data.output)+'</pre>');
         }
         modal.html('');
         restRequest('POST', {'index':'result','link_id':link.unique}, loadResult);
-    }
-
-    function populateExploits(){
-        let exploitList = $('#access-exploits');
-        function appendAbilities(data) {
-            exploitList.empty();
-            data.forEach(function(ability){
-                exploitList.append($("<option></option>")
-                    .attr("value", ability['ability_id'])
-                    .text(ability['name']));
-            });
-            exploitList.prepend("<option disabled='disabled' selected>-- select an ability --</option>");
-        }
-        let paw = $('#access-pets option:selected').attr('value');
-        restRequest('POST', {'paw':paw}, appendAbilities, '/plugin/access/abilities');
     }
 </script>
