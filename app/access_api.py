@@ -4,7 +4,7 @@ from aiohttp import web
 from aiohttp_jinja2 import template
 
 from app.objects.secondclass.c_fact import Fact
-from app.service.auth_svc import check_authorization
+from app.service.auth_svc import for_all_public_methods, check_authorization
 
 
 @for_all_public_methods(check_authorization)
