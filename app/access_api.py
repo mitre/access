@@ -4,9 +4,10 @@ from aiohttp import web
 from aiohttp_jinja2 import template
 
 from app.objects.secondclass.c_fact import Fact
-from app.service.auth_svc import check_authorization
+from app.service.auth_svc import for_all_public_methods, check_authorization
 
 
+@for_all_public_methods(check_authorization)
 class AccessApi:
 
     def __init__(self, services):
@@ -14,7 +15,6 @@ class AccessApi:
         self.rest_svc = services.get('rest_svc')
         self.auth_svc = services.get('auth_svc')
 
-    @check_authorization
     @template('access.html')
     async def landing(self, request):
         search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
@@ -23,14 +23,12 @@ class AccessApi:
         return dict(agents=[a.display for a in await self.data_svc.locate('agents', match=search)],
                     abilities=[a.display for a in abilities], tactics=tactics)
 
-    @check_authorization
     async def exploit(self, request):
         data = dict(await request.json())
         converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts')]
         await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], converted_facts)
         return web.json_response('complete')
 
-    @check_authorization
     async def abilities(self, request):
         search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         data = dict(await request.json())
