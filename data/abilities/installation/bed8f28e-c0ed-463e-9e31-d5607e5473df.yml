@@ -1,0 +1,20 @@
+---
+- id: bed8f28e-c0ed-463e-9e31-d5607e5473df
+  name: Load Metasploit
+  description: Load Metasploit
+  tactic: installation
+  technique:
+    name: installation
+    attack_id: T1254
+  platforms:
+    darwin,linux:
+      sh:
+        command: |
+          python3 msf_extract.py
+        timeout: 300
+        payloads:
+          - msf_extract.py
+        parsers:
+          plugins.access.app.parsers.msf:
+            - source: not.used
+
