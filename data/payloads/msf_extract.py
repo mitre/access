@@ -1,17 +1,32 @@
 import argparse
-import multiprocessing as mp
-import pickle
-import subprocess
+import json
 import logging
+import multiprocessing
+import requests
+import subprocess
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-def get_metasploit_exploits():
-    result = subprocess.run(['msfconsole', '-x', 'show exploits; exit;'], stdout=subprocess.PIPE)
-    return result.stdout
+def get_exploits():
+    if args.api_key:
+        exploits = get_exploits_api(args.api_key)
+    else:
+        exploits = get_exploits_msfconsole()
+    return exploits
+
+def get_exploits_msfconsole():
+    try:
+        result = subprocess.run(['msfconsole', '-x', 'show exploits; exit;'], stdout=subprocess.PIPE)
+    except:
+        result = subprocess.run(['/opt/metasploit-framework/bin/msfconsole', '-x', 'show exploits; exit;'], stdout=subprocess.PIPE)
+
+    return msfconsole_parse_exploits(result.stdout)
 
 
-def parse_exploits(exploit_result):
-    results = metasploit_exploits.decode().split('\n')
+def msfconsole_parse_exploits(exploit_result):
+    results = exploit_result.decode().split('\n')
     exploits = []
     for l in results[results.index('Exploits') + 5::]:
         if not len(l):
@@ -23,7 +38,7 @@ def parse_exploits(exploit_result):
     return exploits
 
 
-def parse_exploit_info(exploit_info):
+def msfconsole_parse_exploit_info(exploit_info):
     # properties = {
     #     'Name',
     #     'Module',
@@ -81,36 +96,99 @@ def parse_exploit_info(exploit_info):
     return exploit_ability
 
 
-def get_exploit(exploit):
+def msfconsole_get_exploit(exploit):
     result = subprocess.run(['msfconsole', '-q', '-x', f'info {exploit}; exit;'], stdout=subprocess.PIPE)
-    return parse_exploit_info(result.stdout)
+    return msfconsole_parse_exploit_info(result.stdout)
+
+
+def get_exploits_api(msf_api_token):
+    url = "https://localhost:5443/api/v1/modules?type=exploit"
+    payload = {}
+    headers = {'Authorization': 'Bearer ' + msf_api_token,}
+    response = requests.request("GET", url, headers=headers, data=payload, verify=False)
+    return json.loads(response.text.encode('utf8')).get('data', [])
+
+
+def create_caldera_ability(c2_uri, c2_token, ability_data):
+    payload = {}
+    headers = {'Authorization': 'Bearer ' + c2_token,}
+    response = requests.request("GET", c2_uri, headers=headers, data=payload, verify=False)
+    return json.loads(response.text.encode('utf8')).get('data', [])
+
+
+def convert_to_ability_format():
+    ability = {
+        "id": "567eaaba-94cc-4a27-83f8-768e5638f4e1darwinsh",
+        "ability_id": "567eaaba-94cc-4a27-83f8-768e5638f4e1",
+        "tactic": "technical-information-gathering",
+        "technique_name": "Conduct active scanning",
+        "technique_id": "T1254",
+        "name": "NMAP scan",
+        "test": "Li9zY2FubmVyLnNoICN7dGFyZ2V0LmlwfQ==",
+        "description": "Scan an external host for open ports and services",
+        "cleanup": [],
+        "executor": "sh",
+        # "unique": "567eaaba-94cc-4a27-83f8-768e5638f4e1darwinsh",
+        "platform": "darwin",
+        # "payloads": [],
+        # "parsers": [],
+        # "requirements": [],
+        "privilege": "",
+        "timeout": 300,
+        "buckets": [
+            "technical-information-gathering"
+        ],
+        "access": 1,
+        "variations": []
+    }
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Extract Metasploit exploits.')
-    parser.add_argument('-c', '--cores', default=mp.cpu_count(), help='cores for processing')
+    parser.add_argument('-c', '--cores', default=multiprocessing.cpu_count(), help='cores for processing')
+    parser.add_argument('-k', '--api-key', required=False, help='api key for faster gathering of data',
+                        default='21d92274ff018949148aef9c367e99aeae96870abe5ac98c952a29f3c46108ebc1aa43ba0c24c3af')
+    parser.add_argument('--c2-uri', default='http://0.0.0.0:8888', help='c2 uri')
+    parser.add_argument('--c2-key', default='', help='c2 api key')
     parser.add_argument('-v', '--verbosity', default=logging.INFO, help='log level')
     args = parser.parse_args()
     FORMAT = '%(message)s'
     logging.basicConfig(level=args.verbosity, format=FORMAT)
 
-    try:
-        with open('exploits.pickle', 'rb') as f:
-            metasploit_exploits = pickle.load(f)
-    except FileNotFoundError:
-        metasploit_exploits = get_metasploit_exploits()
-        with open('exploits.pickle', 'wb') as f:
-            pickle.dump(metasploit_exploits, f, pickle.HIGHEST_PROTOCOL)
+    # try api
+    # get exploits
+    #
+    exploits = get_exploits()
+    for module in exploits:
+        print(module['name'])
+        exploit = msfconsole_get_exploit(module['ref_name'])
+        print(exploit)
 
-    logging.debug('got exploit list')
-    exploits = parse_exploits(metasploit_exploits)
-    logging.debug('parsed exploits')
 
-    pool = mp.Pool(mp.cpu_count())
-    subset = exploits[:10]
-    logging.debug(len(subset))
-    results = pool.map(get_exploit, subset)
-    pool.close()
 
-    logging.info(results)
-    logging.debug('finished')
+"""
+"id": "567eaaba-94cc-4a27-83f8-768e5638f4e1darwinsh",
+"ability_id": "567eaaba-94cc-4a27-83f8-768e5638f4e1",
+"tactic": "technical-information-gathering",
+"technique_name": "Conduct active scanning",
+"technique_id": "T1254",
+"name": "NMAP scan",
+"test": "Li9zY2FubmVyLnNoICN7dGFyZ2V0LmlwfQ==",
+"description": "Scan an external host for open ports and services",
+"cleanup": [],
+"executor": "sh",
+"unique": "567eaaba-94cc-4a27-83f8-768e5638f4e1darwinsh",
+"platform": "darwin",
+"payloads": [
+    "scanner.sh"
+],
+"parsers": [],
+"requirements": [],
+"privilege": "",
+"timeout": 300,
+"buckets": [
+    "technical-information-gathering"
+],
+"access": 1,
+"variations": []
+"""
