@@ -25,7 +25,7 @@ class AccessApi:
 
     async def exploit(self, request):
         data = dict(await request.json())
-        converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts')]
+        converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts', [])]
         await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], converted_facts)
         return web.json_response('complete')
 
