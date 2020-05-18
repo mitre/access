@@ -2,25 +2,34 @@ import argparse
 import json
 import logging
 import multiprocessing
+import platform
+import re
 import requests
 import subprocess
 import urllib3
+import uuid
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def escape_ansi(line):
+    ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', line)
+
+
 def get_exploits():
-    if args.api_key:
-        exploits = get_exploits_api(args.api_key)
-    else:
-        exploits = get_exploits_msfconsole()
-    return exploits
+    try:
+        return get_exploits_api(args.api_key)
+    except:
+        return get_exploits_msfconsole()
+
 
 def get_exploits_msfconsole():
     try:
         result = subprocess.run(['msfconsole', '-x', 'show exploits; exit;'], stdout=subprocess.PIPE)
     except:
-        result = subprocess.run(['/opt/metasploit-framework/bin/msfconsole', '-x', 'show exploits; exit;'], stdout=subprocess.PIPE)
+        result = subprocess.run(['/opt/metasploit-framework/bin/msfconsole', '-x', 'show exploits; exit;'],
+                                stdout=subprocess.PIPE)
 
     return msfconsole_parse_exploits(result.stdout)
 
@@ -39,30 +48,21 @@ def msfconsole_parse_exploits(exploit_result):
 
 
 def msfconsole_parse_exploit_info(exploit_info):
-    # properties = {
-    #     'Name',
-    #     'Module',
-    #     'Platform',
-    #     'Privileged',
-    #     'Arch'
-    # }
-    # exploit_abilities = []
     exploit_ability = dict(
         name=None,
         test=None,
-        description=None,
+        description='metasploit exploit',
         platform=None,
         privilege=None,
         module=None,
         params=[]
     )
-    # exploit_info_lines = exploit_info.decode().split('\n')
-    for section in exploit_info[5::].decode().split('\n\n'):
+    for section in escape_ansi(exploit_info.decode()).split('\n\n'):
         try:
-            section_key = section.strip().split(':')[0]
+            section_key = section.strip().split(':')[0].strip()
             if section_key == 'Name':
                 # info section
-                for line in section.split('\n'):
+                for line in section.strip().split('\n'):
                     key, value = line.strip().split(':')
                     if key == 'Name':
                         exploit_ability['name'] = value.strip()
@@ -104,91 +104,75 @@ def msfconsole_get_exploit(exploit):
 def get_exploits_api(msf_api_token):
     url = "https://localhost:5443/api/v1/modules?type=exploit"
     payload = {}
-    headers = {'Authorization': 'Bearer ' + msf_api_token,}
+    headers = {'Authorization': 'Bearer ' + msf_api_token, }
     response = requests.request("GET", url, headers=headers, data=payload, verify=False)
     return json.loads(response.text.encode('utf8')).get('data', [])
 
 
 def create_caldera_ability(c2_uri, c2_token, ability_data):
     payload = {}
-    headers = {'Authorization': 'Bearer ' + c2_token,}
+    headers = {'Authorization': 'Bearer ' + c2_token, }
     response = requests.request("GET", c2_uri, headers=headers, data=payload, verify=False)
     return json.loads(response.text.encode('utf8')).get('data', [])
 
 
-def convert_to_ability_format():
+def convert_to_ability_format(exploit_info):
+    test = ['msfconsole -x "use exploit/multi/samba/usermap_script; ']
+    for param in exploit_info.get('params', []):
+        test.append('set ' + param['name'] + ' ' + '#{msf.' + param['name'] + '};')
+    test.append('run"')
+    command = ' \n '.join(test)
+
     ability = {
-        "id": "567eaaba-94cc-4a27-83f8-768e5638f4e1darwinsh",
-        "ability_id": "567eaaba-94cc-4a27-83f8-768e5638f4e1",
-        "tactic": "technical-information-gathering",
-        "technique_name": "Conduct active scanning",
-        "technique_id": "T1254",
-        "name": "NMAP scan",
-        "test": "Li9zY2FubmVyLnNoICN7dGFyZ2V0LmlwfQ==",
-        "description": "Scan an external host for open ports and services",
-        "cleanup": [],
-        "executor": "sh",
-        # "unique": "567eaaba-94cc-4a27-83f8-768e5638f4e1darwinsh",
-        "platform": "darwin",
-        # "payloads": [],
-        # "parsers": [],
-        # "requirements": [],
-        "privilege": "",
-        "timeout": 300,
-        "buckets": [
-            "technical-information-gathering"
-        ],
-        "access": 1,
-        "variations": []
+        "id": str(uuid.uuid4()),
+        "tactic": "metasploit",
+        "technique": {
+            "name": "metasploit",
+            "attack_id": "MSF999"},
+        "name": exploit_info.get('name'),
+        "description": exploit_info.get('name'),
+        "platforms": {
+            platform.system().lower():
+                {exploit_info.get('executor', 'sh'): {
+                    "command": command,
+                    "timeout": 600,
+                }}
+        },
+        "privilege": exploit_info.get('privilege', ''),
     }
+    ability['unique'] = ability['id']
+    return ability
+
+
+def save_ability(c2_uri, c2_key, ability):
+    url = c2_uri + "/api/rest"
+    ability['index'] = 'abilities'
+    payload = json.dumps(ability)
+    headers = {
+        'Content-Type': 'application/json',
+        'KEY': c2_key,
+    }
+    requests.request("PUT", url, headers=headers, data=payload)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Extract Metasploit exploits.')
     parser.add_argument('-c', '--cores', default=multiprocessing.cpu_count(), help='cores for processing')
-    parser.add_argument('-k', '--api-key', required=False, help='api key for faster gathering of data',
-                        default='21d92274ff018949148aef9c367e99aeae96870abe5ac98c952a29f3c46108ebc1aa43ba0c24c3af')
+    parser.add_argument('-k', '--api-key', required=False, help='api key for faster gathering of data')
     parser.add_argument('--c2-uri', default='http://0.0.0.0:8888', help='c2 uri')
-    parser.add_argument('--c2-key', default='', help='c2 api key')
+    parser.add_argument('--c2-key', default='ADMIN123', help='c2 api key')
     parser.add_argument('-v', '--verbosity', default=logging.INFO, help='log level')
     args = parser.parse_args()
+
     FORMAT = '%(message)s'
     logging.basicConfig(level=args.verbosity, format=FORMAT)
 
-    # try api
-    # get exploits
-    #
     exploits = get_exploits()
     for module in exploits:
-        print(module['name'])
-        exploit = msfconsole_get_exploit(module['ref_name'])
-        print(exploit)
+        try:
+            exploit = msfconsole_get_exploit(module['ref_name'])
+            ability = convert_to_ability_format(exploit)
+            save_ability(args.c2_uri, args.c2_key, ability)
+        except:
+            logging.error(module['ref_name'])
 
-
-
-"""
-"id": "567eaaba-94cc-4a27-83f8-768e5638f4e1darwinsh",
-"ability_id": "567eaaba-94cc-4a27-83f8-768e5638f4e1",
-"tactic": "technical-information-gathering",
-"technique_name": "Conduct active scanning",
-"technique_id": "T1254",
-"name": "NMAP scan",
-"test": "Li9zY2FubmVyLnNoICN7dGFyZ2V0LmlwfQ==",
-"description": "Scan an external host for open ports and services",
-"cleanup": [],
-"executor": "sh",
-"unique": "567eaaba-94cc-4a27-83f8-768e5638f4e1darwinsh",
-"platform": "darwin",
-"payloads": [
-    "scanner.sh"
-],
-"parsers": [],
-"requirements": [],
-"privilege": "",
-"timeout": 300,
-"buckets": [
-    "technical-information-gathering"
-],
-"access": 1,
-"variations": []
-"""
