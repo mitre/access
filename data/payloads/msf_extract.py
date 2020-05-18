@@ -20,14 +20,14 @@ def escape_ansi(line):
 def get_exploits():
     try:
         return get_exploits_api(args.api_key)
-    except:
+    except Exception:
         return get_exploits_msfconsole()
 
 
 def get_exploits_msfconsole():
     try:
         result = subprocess.run(['msfconsole', '-x', 'show exploits; exit;'], stdout=subprocess.PIPE)
-    except:
+    except Exception:
         result = subprocess.run(['/opt/metasploit-framework/bin/msfconsole', '-x', 'show exploits; exit;'],
                                 stdout=subprocess.PIPE)
 
@@ -37,12 +37,12 @@ def get_exploits_msfconsole():
 def msfconsole_parse_exploits(exploit_result):
     results = exploit_result.decode().split('\n')
     exploits = []
-    for l in results[results.index('Exploits') + 5::]:
-        if not len(l):
+    for line in results[results.index('Exploits') + 5::]:
+        if not len(line):
             continue
         try:
-            exploits.append(l.split()[1].strip())
-        except:
+            exploits.append(line.split()[1].strip())
+        except Exception:
             continue
     return exploits
 
@@ -89,7 +89,7 @@ def msfconsole_parse_exploit_info(exploit_info):
                                                           current_setting=current_setting,
                                                           required=required,
                                                           description=description))
-        except:
+        except Exception:
             logging.debug('brick')
             continue
     logging.debug(exploit_ability['name'])
@@ -173,6 +173,5 @@ if __name__ == '__main__':
             exploit = msfconsole_get_exploit(module['ref_name'])
             ability = convert_to_ability_format(exploit)
             save_ability(args.c2_uri, args.c2_key, ability)
-        except:
+        except Exception:
             logging.error(module['ref_name'])
-
