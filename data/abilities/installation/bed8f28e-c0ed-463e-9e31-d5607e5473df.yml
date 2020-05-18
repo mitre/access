@@ -1,7 +1,7 @@
 ---
 - id: bed8f28e-c0ed-463e-9e31-d5607e5473df
-  name: Load Metasploit
-  description: Load Metasploit
+  name: Load Metasploit Abilities
+  description: Load Metasploit Abilities
   tactic: installation
   technique:
     name: installation
@@ -14,7 +14,3 @@
         timeout: 300
         payloads:
           - msf_extract.py
-        parsers:
-          plugins.access.app.parsers.msf:
-            - source: not.used
-
