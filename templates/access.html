@@ -66,6 +66,11 @@
                         <div class="exploit-exploit">
                             <pre id="exploit-exploit"></pre>
                         </div>
+                        <select id="currentObfuscation" class="dark-select" style="width:33%">
+                          {% for o in obfuscators %}
+                            <option value="{{ o.name }}">Use {{ o.name }} obfuscation</option>
+                          {% endfor %}
+                        </select>
                         <br>
                         <ul id="exploit-properties"></ul>
                     </center>
@@ -170,7 +175,7 @@
       if(paw == null || ability.ability_id == null) {
           alert('Missing requirement!');
       } else {
-          let data = {'paw': paw, 'ability_id': ability.ability_id, 'facts': facts};
+          let data = {'paw': paw, 'ability_id': ability.ability_id, 'facts': facts, 'obfuscator':$('#currentObfuscation').val()};
           restRequest('POST', data, runExploitCallback, '/plugin/access/exploit');
       }
     }
@@ -179,7 +184,7 @@
         let modal = $('#alert-text');
         function loadResult(data) {
             document.getElementById('alert-modal').style.display='block';
-            modal.html('<pre style="font-size:15px;">'+atob(data.output)+'</pre>');
+            modal.html('<i>'+atob(link.command)+'</i><hr><pre style="font-size:15px;">'+atob(data.output)+'</pre>');
         }
         modal.html('');
         restRequest('POST', {'index':'result','link_id':link.unique}, loadResult);
