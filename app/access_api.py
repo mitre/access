@@ -20,13 +20,14 @@ class AccessApi:
         search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         abilities = await self.data_svc.locate('abilities', match=search)
         tactics = sorted(list(set(a.tactic.lower() for a in abilities)))
+        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
         return dict(agents=[a.display for a in await self.data_svc.locate('agents', match=search)],
-                    abilities=[a.display for a in abilities], tactics=tactics)
+                    abilities=[a.display for a in abilities], tactics=tactics, obfuscators=obfuscators)
 
     async def exploit(self, request):
         data = dict(await request.json())
         converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts', [])]
-        await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], converted_facts)
+        await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], data['obfuscator'], converted_facts)
         return web.json_response('complete')
 
     async def abilities(self, request):
