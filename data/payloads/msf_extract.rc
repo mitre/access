@@ -1,0 +1,99 @@
+<ruby>
+
+require 'json'
+require 'net/http'
+require 'securerandom'
+require 'uri'
+
+C2_URI = 'http://0.0.0.0:8888'
+C2_KEY = 'ADMIN123'
+
+def get_exploit_info(exploit_name)
+    exploit = self.framework.modules.create(exploit_name)
+    privileged = exploit.privileged ? "Elevated" : ""
+    platforms = exploit.target_platform.platforms.map {|plat| plat.realname }
+
+    params = []
+    for name, option in exploit.options
+        unless option.advanced || name.starts_with?("HTTP::")
+            params.push(name)
+        end
+    end
+
+    data = {
+        "name" => exploit.name,
+        "description" => exploit.description.nil? ? "metasploit exploit" : exploit.description,
+        "platform" => platforms,
+        "privilege" => exploit.privileged ? "Elevated" : "",
+        "module" => exploit.realname,
+        "params" => params
+    }
+end
+
+def convert_to_ability(exploit)
+    command = 'msfconsole -x "use ' + exploit['module'] + '; '
+    for param in exploit['params']
+        command += 'set ' + param + ' ' + '#{msf.' + param + '}; '
+    end
+    command += 'run"'
+
+    os = get_os
+    executor = (os == "windows" ? "cmd" : "sh")
+
+    ability = {
+        "id" => SecureRandom.uuid,
+        "tactic" => "metasploit",
+        "technique" => {
+            "name" => "metasploit",
+            "attack_id" => "MSF999"
+        },
+        "name" => exploit['name'],
+        "description" => exploit['description'],
+        "privilege" => exploit['privilege'],
+        "platforms" => {
+            os => {
+                executor => {
+                    "command" => command,
+                    "timeout" => 600,
+                }
+            }
+        }
+    }
+    ability['unique'] = ability['id']
+    return ability
+end
+
+def get_os
+    if (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
+        return "windows"
+    elsif (/darwin/ =~ RUBY_PLATFORM) != nil
+        return "darwin"
+    else
+        return "linux"
+    end
+end
+
+def save_ability(ability)
+    uri = URI.parse(C2_URI + '/api/rest')
+    header = {
+        'Content-Type' => 'text/json',
+        'KEY' => C2_KEY
+    }
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Put.new(uri.request_uri, header)
+    ability['index'] = 'abilities'
+    request.body = ability.to_json
+    response = http.request(request)
+end
+
+for exploit_name in self.framework.exploits.keys
+    exploit = get_exploit_info(exploit_name)
+    ability = convert_to_ability(exploit)
+    response = save_ability(ability)
+end
+
+exit(true)
+
+</ruby>
+
+quit
