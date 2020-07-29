@@ -5,9 +5,6 @@ require 'net/http'
 require 'securerandom'
 require 'uri'
 
-C2_URI = 'http://0.0.0.0:8888'
-C2_KEY = 'ADMIN123'
-
 def get_exploit_info(exploit_name)
     exploit = self.framework.modules.create(exploit_name)
     privileged = exploit.privileged ? "Elevated" : ""
@@ -73,11 +70,11 @@ def get_os
     end
 end
 
-def save_ability(ability)
-    uri = URI.parse(C2_URI + '/api/rest')
+def save_ability(ability, c2_uri, c2_key)
+    uri = URI.parse(c2_uri + '/api/rest')
     header = {
         'Content-Type' => 'text/json',
-        'KEY' => C2_KEY
+        'KEY' => c2_key
     }
     http = Net::HTTP.new(uri.host, uri.port)
     request = Net::HTTP::Put.new(uri.request_uri, header)
@@ -86,10 +83,13 @@ def save_ability(ability)
     response = http.request(request)
 end
 
+c2_uri = ARGV.shift || 'http://0.0.0.0:8888'
+c2_key = ARGV.shift || 'ADMIN123'
+
 for exploit_name in self.framework.exploits.keys
     exploit = get_exploit_info(exploit_name)
     ability = convert_to_ability(exploit)
-    response = save_ability(ability)
+    response = save_ability(ability, c2_uri, c2_key)
 end
 
 exit(true)
