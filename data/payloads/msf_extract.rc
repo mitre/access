@@ -7,24 +7,43 @@ require 'uri'
 
 def get_exploit_info(exploit_name)
     exploit = self.framework.modules.create(exploit_name)
+    description = get_exploit_description(exploit)
     privileged = exploit.privileged ? "Elevated" : ""
     platforms = exploit.target_platform.platforms.map {|plat| plat.realname }
 
     params = []
     for name, option in exploit.options
-        unless option.advanced || name.starts_with?("HTTP::")
+        if option.required && option.default.nil?
             params.push(name)
         end
     end
 
     data = {
         "name" => exploit.name,
-        "description" => exploit.description.nil? ? "metasploit exploit" : exploit.description,
+        "description" => description,
         "platform" => platforms,
         "privilege" => exploit.privileged ? "Elevated" : "",
         "module" => exploit.realname,
         "params" => params
     }
+end
+
+def get_exploit_description(exploit)
+    description = Rex::Text.compress(exploit.description)
+    description << "\n\n"
+
+    if (exploit.options.has_options?)
+      description << "Basic options:\n\n"
+      description << ::Msf::Serializer::ReadableText.dump_options(exploit, "  ")
+    end
+
+    adv_opts = ::Msf::Serializer::ReadableText.dump_advanced_options(exploit, "   ")
+    description << "\nAdvanced options:\n\n"
+    description << "#{adv_opts}\n" if (adv_opts and adv_opts.length > 0)
+
+    description << ::Msf::Serializer::ReadableText.dump_references(exploit, "  ")
+
+    return description
 end
 
 def convert_to_ability(exploit)
