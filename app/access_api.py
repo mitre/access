@@ -1,4 +1,5 @@
 import itertools
+import copy
 
 from aiohttp import web
 from aiohttp_jinja2 import template
@@ -34,6 +35,17 @@ class AccessApi:
         search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         data = dict(await request.json())
         agent = (await self.data_svc.locate('agents', dict(paw=data['paw'])))[0]
-        abilities_by_executor = [await self.data_svc.locate('abilities', dict(executor=ex)) for ex in agent.executors]
-        capable_abilities = await agent.capabilities(list(itertools.chain.from_iterable(abilities_by_executor)))
-        return web.json_response([x.display for x in capable_abilities if x.access in search['access']])
+        abilities = await self.data_svc.locate('abilities', match=search)
+        capable_abilities = await agent.capabilities(list(itertools.chain.from_iterable(abilities)))
+        return web.json_response([a.display for a in capable_abilities])
+
+    async def executor(self, request):
+        data = dict(await request.json())
+        search = dict(access=tuple(await self.auth_svc.get_permissions(request)),
+                      ability_id=data['ability_id'])
+        agent = (await self.data_svc.locate('agents', dict(paw=data['paw'])))[0]
+        abilities = await self.data_svc.locate('abilities', match=search)
+        ability, executor = (await agent.capabilities_with_preference(abilities))[0]
+        trimmed_ability = copy.deepcopy(ability)
+        trimmed_ability.executors = [executor]
+        return web.json_response(trimmed_ability.display)

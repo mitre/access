@@ -19,20 +19,21 @@
             <option value={{ a.paw }}>{{ a.host }} - {{ a.paw }}</option>
         {% endfor %}}
       </select>
-      <input id="ability-search-filter" style="width:75%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('access-sidebar', {{ abilities }});">
-      <select id="ability-tactic-filter" onchange="populateTechniques('access-sidebar', {{ abilities | sort(attribute='technique_id') }});">
+      <input id="ability-search-filter" style="width:75%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('access-sidebar', accessAbilities);">
+      <select id="ability-tactic-filter" onchange="populateTechniques('access-sidebar', accessAbilities);">
           <option disabled selected>Choose a tactic</option>
             {% for tactic in tactics %}
                 <option value={{ tactic }} data-tactic={{ tactic }}>{{ tactic }}</option>
             {% endfor %}}
       </select>
-      <select id="ability-technique-filter" onchange="populateAbilities('access-sidebar', {{ abilities | sort(attribute='name') }});">
+      <select id="ability-technique-filter" onchange="populateAbilities('access-sidebar', accessAbilities);">
           <option disabled selected>Choose a technique</option>
       </select>
-      <select id="ability-ability-filter" onchange="showProperties()">
+      <select id="ability-ability-filter">
           <option disabled selected>0 abilities</option>
       </select>
       <br>
+      <button id="setProperties" type="button" class="button-success atomic-button" onclick="setProperties()">Set Properties</button>
       <button id="exploitExploit" type="button" class="button-success atomic-button" onclick="runExploit()">Run</button>
     </div>
     <div class="column" style="flex:75%">
@@ -92,6 +93,8 @@
 
 <script src="/gui/js/ability.js"></script>
 <script>
+    var accessAbilities = {{ abilities | sort(attribute='name') | tojson }};
+
     $(document).ready(function () {
         stream('An agent is not necessarily deployed in a target network - it can run server-side as your assistant');
     });
@@ -136,16 +139,15 @@
         }
     }
 
-    function showProperties(){
-        function propertiesCallback(data){
-            let cmd = atob(data[0].test);
-            let found = [], rxp = /{([^}]+)}/g, str = cmd, curMatch;
+    function setProperties() {
+        function propertiesCallback(ability) {
+            let found = [], rxp = /#{([^}]+)}/g, str = ability.executors[0].command, curMatch;
             while(curMatch = rxp.exec(str)) {
                 found.push(curMatch[1]);
             }
             $('#exploit-properties').empty();
-            $('#exploit-description').text(data[0].description);
-            $('#exploit-exploit').text(atob(data[0].test));
+            $('#exploit-description').text(ability.description);
+            $('#exploit-exploit').text(ability.executors[0].command);
 
             found.forEach(function(prop){
                 let template = $("#property-template").clone();
@@ -156,7 +158,13 @@
             document.getElementById("properties-modal").style.display = "block";
         }
         let ability = $('#ability-ability-filter option:selected').data('ability');
-        restRequest('POST', {'index':'abilities', 'ability_id': ability.ability_id}, propertiesCallback);
+        let paw = $('#access-pets option:selected').attr('value');
+        if (paw == null || ability == null) {
+            alert('Missing requirement!');
+        } else {
+            let data = {'paw': paw, 'ability_id': ability.ability_id};
+            restRequest('POST', data, propertiesCallback, '/plugin/access/executor');
+        }
     }
 
     function runExploit(){
@@ -172,7 +180,7 @@
             facts.push({'trait':trait,'value':value});
       });
       let paw = $('#access-pets option:selected').attr('value');
-      if(paw == null || ability.ability_id == null) {
+      if (paw == null || ability == null) {
           alert('Missing requirement!');
       } else {
           let data = {'paw': paw, 'ability_id': ability.ability_id, 'facts': facts, 'obfuscator':$('#currentObfuscation').val()};
@@ -184,7 +192,7 @@
         let modal = $('#alert-text');
         function loadResult(data) {
             document.getElementById('alert-modal').style.display='block';
-            modal.html('<i>'+atob(link.command)+'</i><hr><pre style="font-size:15px;">'+atob(data.output)+'</pre>');
+            modal.html('<i>'+atob(link.command)+'</i><hr><pre style="font-size:15px;">'+data.output+'</pre>');
         }
         modal.html('');
         restRequest('POST', {'index':'result','link_id':link.unique}, loadResult);
