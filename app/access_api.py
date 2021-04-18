@@ -32,19 +32,20 @@ class AccessApi:
         return web.json_response('complete')
 
     async def abilities(self, request):
-        search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         data = dict(await request.json())
-        agent = (await self.data_svc.locate('agents', dict(paw=data['paw'])))[0]
-        abilities = await self.data_svc.locate('abilities', match=search)
+        agent_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), paw=data['paw'])
+        agent = (await self.data_svc.locate('agents', match=agent_search))[0]
+        ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        abilities = await self.data_svc.locate('abilities', match=ability_search)
         capable_abilities = await agent.capabilities(list(itertools.chain.from_iterable(abilities)))
         return web.json_response([a.display for a in capable_abilities])
 
     async def executor(self, request):
         data = dict(await request.json())
-        search = dict(access=tuple(await self.auth_svc.get_permissions(request)),
-                      ability_id=data['ability_id'])
-        agent = (await self.data_svc.locate('agents', dict(paw=data['paw'])))[0]
-        abilities = await self.data_svc.locate('abilities', match=search)
+        agent_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), paw=data['paw'])
+        agent = (await self.data_svc.locate('agents', match=agent_search))[0]
+        ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), ability_id=data['ability_id'])
+        abilities = await self.data_svc.locate('abilities', match=ability_search)
         ability, executor = (await agent.capabilities_with_preferred_executor(abilities))[0]
         trimmed_ability = copy.deepcopy(ability)
         trimmed_ability.executors = [executor]
