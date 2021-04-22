@@ -138,14 +138,14 @@
 
     function showProperties(){
         function propertiesCallback(data){
-            let cmd = atob(data[0].test);
+            let cmd = b64DecodeUnicode(data[0].test);
             let found = [], rxp = /{([^}]+)}/g, str = cmd, curMatch;
             while(curMatch = rxp.exec(str)) {
                 found.push(curMatch[1]);
             }
             $('#exploit-properties').empty();
             $('#exploit-description').text(data[0].description);
-            $('#exploit-exploit').text(atob(data[0].test));
+            $('#exploit-exploit').text(b64DecodeUnicode(data[0].test));
 
             found.forEach(function(prop){
                 let template = $("#property-template").clone();
@@ -184,7 +184,7 @@
         let modal = $('#alert-text');
         function loadResult(data) {
             document.getElementById('alert-modal').style.display='block';
-            modal.html('<i>'+atob(link.command)+'</i><hr><pre style="font-size:15px;">'+atob(data.output)+'</pre>');
+            modal.html('<i>'+b64DecodeUnicode(link.command)+'</i><hr><pre style="font-size:15px;">'+b64DecodeUnicode(data.output)+'</pre>');
         }
         modal.html('');
         restRequest('POST', {'index':'result','link_id':link.unique}, loadResult);
