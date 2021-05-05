@@ -45,8 +45,8 @@ class AccessApi:
         agent_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), paw=data['paw'])
         agent = (await self.data_svc.locate('agents', match=agent_search))[0]
         ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), ability_id=data['ability_id'])
-        abilities = await self.data_svc.locate('abilities', match=ability_search)
-        ability, executor = (await agent.capabilities_with_preferred_executor(abilities))[0]
+        ability = (await self.data_svc.locate('abilities', match=ability_search))[0]
+        executor = await agent.get_preferred_executor(ability)
         trimmed_ability = copy.deepcopy(ability)
         trimmed_ability.executors = [executor]
         return web.json_response(trimmed_ability.display)
