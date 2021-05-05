@@ -1,5 +1,5 @@
-import itertools
 import copy
+import itertools
 
 from aiohttp import web
 from aiohttp_jinja2 import template
@@ -26,13 +26,13 @@ class AccessApi:
                     abilities=[a.display for a in abilities], tactics=tactics, obfuscators=obfuscators)
 
     async def exploit(self, request):
-        data = dict(await request.json())
+        data = await request.json()
         converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts', [])]
         await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], data['obfuscator'], converted_facts)
         return web.json_response('complete')
 
     async def abilities(self, request):
-        data = dict(await request.json())
+        data = await request.json()
         agent_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), paw=data['paw'])
         agent = (await self.data_svc.locate('agents', match=agent_search))[0]
         ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
@@ -41,7 +41,7 @@ class AccessApi:
         return web.json_response([a.display for a in capable_abilities])
 
     async def executor(self, request):
-        data = dict(await request.json())
+        data = await request.json()
         agent_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), paw=data['paw'])
         agent = (await self.data_svc.locate('agents', match=agent_search))[0]
         ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), ability_id=data['ability_id'])
