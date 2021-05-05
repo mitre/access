@@ -192,7 +192,7 @@
         let modal = $('#alert-text');
         function loadResult(data) {
             document.getElementById('alert-modal').style.display='block';
-            modal.html('<i>'+atob(link.command)+'</i><hr><pre style="font-size:15px;">'+data.output+'</pre>');
+            modal.html('<i>'+b64DecodeUnicode(link.command)+'</i><hr><pre style="font-size:15px;">'+b64DecodeUnicode(data.output)+'</pre>');
         }
         modal.html('');
         restRequest('POST', {'index':'result','link_id':link.unique}, loadResult);
