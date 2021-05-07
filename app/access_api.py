@@ -48,5 +48,6 @@ class AccessApi:
         ability = (await self.data_svc.locate('abilities', match=ability_search))[0]
         executor = await agent.get_preferred_executor(ability)
         trimmed_ability = copy.deepcopy(ability)
-        trimmed_ability.executors = [executor]
+        trimmed_ability.remove_all_executors()
+        trimmed_ability.add_executor(executor)
         return web.json_response(trimmed_ability.display)
