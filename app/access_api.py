@@ -1,3 +1,4 @@
+import copy
 import itertools
 
 from aiohttp import web
@@ -25,15 +26,28 @@ class AccessApi:
                     abilities=[a.display for a in abilities], tactics=tactics, obfuscators=obfuscators)
 
     async def exploit(self, request):
-        data = dict(await request.json())
+        data = await request.json()
         converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts', [])]
         await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], data['obfuscator'], converted_facts)
         return web.json_response('complete')
 
     async def abilities(self, request):
-        search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
-        data = dict(await request.json())
-        agent = (await self.data_svc.locate('agents', dict(paw=data['paw'])))[0]
-        abilities_by_executor = [await self.data_svc.locate('abilities', dict(executor=ex)) for ex in agent.executors]
-        capable_abilities = await agent.capabilities(list(itertools.chain.from_iterable(abilities_by_executor)))
-        return web.json_response([x.display for x in capable_abilities if x.access in search['access']])
+        data = await request.json()
+        agent_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), paw=data['paw'])
+        agent = (await self.data_svc.locate('agents', match=agent_search))[0]
+        ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        abilities = await self.data_svc.locate('abilities', match=ability_search)
+        capable_abilities = await agent.capabilities(list(itertools.chain.from_iterable(abilities)))
+        return web.json_response([a.display for a in capable_abilities])
+
+    async def executor(self, request):
+        data = await request.json()
+        agent_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), paw=data['paw'])
+        agent = (await self.data_svc.locate('agents', match=agent_search))[0]
+        ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), ability_id=data['ability_id'])
+        ability = (await self.data_svc.locate('abilities', match=ability_search))[0]
+        executor = await agent.get_preferred_executor(ability)
+        trimmed_ability = copy.deepcopy(ability)
+        trimmed_ability.remove_all_executors()
+        trimmed_ability.add_executor(executor)
+        return web.json_response(trimmed_ability.display)
