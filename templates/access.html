@@ -141,6 +141,10 @@
 
     function setProperties() {
         function propertiesCallback(ability) {
+            if ('error' in ability){
+                stream(ability.error)
+                return;
+            } 
             let found = [], rxp = /#{([^}]+)}/g, str = ability.executors[0].command, curMatch;
             while(curMatch = rxp.exec(str)) {
                 found.push(curMatch[1]);
