@@ -51,5 +51,5 @@ class AccessApi:
             return web.json_response(dict(error='Executor not found for ability'))
         trimmed_ability = copy.deepcopy(ability)
         trimmed_ability.remove_all_executors()
-        trimmed_ability.add_executor(executor) 
+        trimmed_ability.add_executor(executor)
         return web.json_response(trimmed_ability.display)
