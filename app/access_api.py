@@ -1,5 +1,4 @@
 import copy
-import itertools
 
 from aiohttp import web
 from aiohttp_jinja2 import template
@@ -37,7 +36,7 @@ class AccessApi:
         agent = (await self.data_svc.locate('agents', match=agent_search))[0]
         ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         abilities = await self.data_svc.locate('abilities', match=ability_search)
-        capable_abilities = await agent.capabilities(list(itertools.chain.from_iterable(abilities)))
+        capable_abilities = await agent.capabilities(list(abilities))
         return web.json_response([a.display for a in capable_abilities])
 
     async def executor(self, request):
