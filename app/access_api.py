@@ -47,6 +47,8 @@ class AccessApi:
         ability_search = dict(access=tuple(await self.auth_svc.get_permissions(request)), ability_id=data['ability_id'])
         ability = (await self.data_svc.locate('abilities', match=ability_search))[0]
         executor = await agent.get_preferred_executor(ability)
+        if not executor:
+            return web.json_response(dict(error='Executor not found for ability'))
         trimmed_ability = copy.deepcopy(ability)
         trimmed_ability.remove_all_executors()
         trimmed_ability.add_executor(executor)
