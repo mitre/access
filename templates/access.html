@@ -38,8 +38,8 @@
         <p>Select an agent to get started</p> 
     </div>
     
-    <div x-show="selectedAgentPaw && links.length">
-        <div class="is-flex">
+    <div x-show="selectedAgentPaw">
+        <div class="is-flex" x-show="selectedAgentPaw">
             <button class="button is-primary is-small mr-4" @click="showRunModal = true">
                 <span class="icon"><i class="fas fa-running"></i></span>
                 <span>Run an Ability</span>
@@ -47,6 +47,10 @@
             <span class="mr-4"><strong>Agent Platform</strong>: <span x-text="selectedAgent.platform"></span></span>
             <span><strong>Compatible Abilities</strong>: <span x-text="filteredAbilities.length"></span></span>
         </div>
+       <p class="has-text-centered content" x-show="!links.length">No links to show</p> 
+    </div>
+
+    <div x-show="selectedAgentPaw && links.length">
         <table class="table is-striped is-fullwidth">
             <thead>
                 <tr>
@@ -71,10 +75,6 @@
                 </template>
             </tbody>
         </table>  
-    </div>
-    
-    <div class="has-text-centered content" x-show="selectedAgentPaw && !links.length">
-       <p>No links to show</p> 
     </div>
 
     <!-- MODALS -->
@@ -389,7 +389,7 @@
             },
             
             execute() {
-                if (this.facts.filter((fact) => !fact.value)) {
+                if (this.facts.length && this.facts.filter((fact) => !fact.value).length) {
                     toast('Fact values cannot be empty!', false);
                     return;
                 }
@@ -404,7 +404,7 @@
                 apiV2('POST', '/plugin/access/exploit', requestBody).then((data) => {
                     this.showRunModal = false;
                     this.refreshAgents();
-                    toast('Executed ability!', true);
+                    toast('Executed ability', true);
                 }).catch((error) => {
                     console.error(error);
                 })
