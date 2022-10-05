@@ -57,25 +57,19 @@ def convert_to_ability(exploit)
     executor = (os == "windows" ? "cmd" : "sh")
 
     ability = {
-        "id" => SecureRandom.uuid,
+        "ability_id" => SecureRandom.uuid,
         "tactic" => "metasploit",
-        "technique" => {
-            "name" => "metasploit",
-            "attack_id" => "MSF999"
-        },
+        "technique_name" => "metasploit",
+        "technique_id" => "T1349",
         "name" => exploit['name'],
         "description" => exploit['description'],
         "privilege" => exploit['privilege'],
-        "platforms" => {
-            os => {
-                executor => {
-                    "command" => command,
-                    "timeout" => 600,
-                }
-            }
-        }
+        "executors" => [{
+            "command" => command,
+            "timeout" => 60,
+            "platform" => os
+        }]
     }
-    ability['unique'] = ability['id']
     return ability
 end
 
@@ -90,14 +84,13 @@ def get_os
 end
 
 def save_ability(ability, c2_uri, c2_key)
-    uri = URI.parse(c2_uri + '/api/rest')
+    uri = URI.parse(c2_uri + '/api/v2/abilities')
     header = {
         'Content-Type' => 'text/json',
         'KEY' => c2_key
     }
     http = Net::HTTP.new(uri.host, uri.port)
-    request = Net::HTTP::Put.new(uri.request_uri, header)
-    ability['index'] = 'abilities'
+    request = Net::HTTP::Post.new(uri, header)
     request.body = ability.to_json
     response = http.request(request)
 end
