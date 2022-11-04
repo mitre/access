@@ -88,8 +88,10 @@
             <section class="modal-card-body">
                 <label class="label">Command</label>
                 <pre x-text="outputCommand"></pre>
-                <label class="label">Output</label>
-                <pre x-text="outputResult || '[ no output to show ]'"></pre>
+                <label class="label">Standard Output</label>
+                <pre x-text="outputResult.stdout || '[ no output to show ]'"></pre>
+                <label class="label">Standard Error</label>
+                <pre x-text="outputResult.stderr || '[ no errors to show ]'"></pre>
             </section>
             <footer class="modal-card-foot">
                 <nav class="level">
@@ -343,7 +345,11 @@
             showOutput(link) {
                 restRequest('POST', { 'index': 'result', 'link_id': link.unique }, (data) => {
                     this.outputCommand = b64DecodeUnicode(link.command);
-                    this.outputResult = b64DecodeUnicode(data.output);
+                    try {
+                        this.outputResult = JSON.parse(b64DecodeUnicode(data.output));
+                    } catch (SyntaxError) {
+                        this.outputResult = ""
+                    }
                     this.showOutputModal = true;
                 });
             },
