@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 echo '[+] Starting basic NMAP scan'
 nmap -Pn $1

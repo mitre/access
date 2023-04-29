@@ -7,7 +7,7 @@
     name: Conduct active scanning
     attack_id: T1254
   platforms:
-    darwin,linux:
+    darwin,freebsd,linux:
       sh:
         command: |
           ./scanner.sh #{target.ip}
