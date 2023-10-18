@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { useAbilityStore } from "@/stores/abilityStore.js";
 import { useAdversaryStore } from "@/stores/adversaryStore.js";
 import { useAgentStore } from "@/stores/agentStore.js";
+import { restRequest, apiV2 } from "../../../../static/js/shared";
 
 const abilityStore = useAbilityStore();
 const { abilities } = storeToRefs(abilityStore);
@@ -129,6 +130,7 @@ const accessAgents = computed(() =>
               this.outputResult = ""
             }
             this.showOutputModal = true;
+            console.log(outputistrue)
           });
         },
 
@@ -260,90 +262,116 @@ table.table.is-striped.is-fullwidth
 // MODALS
 
 div.modal(v-bind:class="{ 'is-active': showOutputModal }")
-.modal-background(@click="showOutputModal = false")
-.modal-card.wide
-    header.modal-card-head
-    p.modal-card-title Link Output
-    section.modal-card-body
-    label.label Command
-    pre(v-text="outputCommand")
-    label.label Standard Output
-    pre(v-text="outputResult.stdout || '[ no output to show ]'")
-    label.label Standard Error
-    pre(v-text="outputResult.stderr || '[ no errors to show ]'")
-    footer.modal-card-foot
-    nav.level
-        .level-left
-        .level-right
-        .level-item
-            button.button.is-small(@click="showOutputModal = false") Close
+    .modal-background(@click="showOutputModal = false")
+    .modal-card.wide
+        header.modal-card-head
+        p.modal-card-title Link Output
+        section.modal-card-body
+        label.label Command
+        pre(v-text="outputCommand")
+        label.label Standard Output
+        pre(v-text="outputResult.stdout || '[ no output to show ]'")
+        label.label Standard Error
+        pre(v-text="outputResult.stderr || '[ no errors to show ]'")
+        footer.modal-card-foot
+        nav.level
+            .level-left
+            .level-right
+            .level-item
+                button.button.is-small(@click="showOutputModal = false") Close
 
-//- div.modal(v-bind:class="{ 'is-active': showRunModal }")
-//- .modal-background(@click="showRunModal = false")
-//- .modal-card
-//-     header.modal-card-head
-//-     p.modal-card-title Run an Ability
-//-     section.modal-card-body
-//-     p.has-text-centered Select an Ability
-//-     form
-//-         .field.is-horizontal
-//-         .field-label.is-small
-//-             label.label
-//-             span.icon.is-small
-//-                 i.fas.fa-search
-//-         .field-body
-//-             .field
-//-             .control
-//-                 input.input.is-small(v-model="searchQuery" placeholder="Search for an ability..." v-on:keyup="searchForAbility()")
-//-                 .search-results
-//-                 template(v-on="result of searchResults", :key="result.ability_id")
-//-                     p(@click="selectAbility(result.ability_id)" v-text="result.name")
-//-     form
-//-         .field.is-horizontal
-//-         .field-label.is-small
-//-             label.label Tactic
-//-         .field-body
-//-             .field
-//-             .control
-//-                 div.select.is-small.is-fullwidth
-//-                 select(v-model="selectedTactic" v-on:change="selectedAbilityId = ''")
-//-                     option(default) Choose a tactic
-//-                     template(v-on="tactic of [...new Set(filteredAbilities.map((e) => e.tactic))]", :key="tactic")
-//-                     option(v-bind:value="tactic" v-text="tactic")
-//-         .field.is-horizontal
-//-         .field-label.is-small
-//-             label.label Technique
-//-         .field-body
-//-             .field
-//-             .control
-//-                 div.select.is-small.is-fullwidth
-//-                 select(v-model="selectedTechnique" v-bind:disabled="!selectedTactic" v-on:change="selectedAbilityId = ''")
-//-                     option(default) Choose a technique
-//-                     template(:key="exploit.technique_id" v-on="exploit of [...new Set(filteredAbilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => filteredAbilities.find((e) => e.technique_id === t))")
-//-                     option(v-bind:value="exploit.technique_id" v-text="exploit.technique_id")
-//-         .field.is-horizontal
-//-         .field-label.is-small
-//-             label.label Ability
-//-         .field-body
-//-             .field
-//-             .control
-//-                 div.select.is-small.is-fullwidth
-//-                 select(v-model="selectedAbilityId", v-bind:disabled="!selectedTechnique")
-//-                     option(default) Choose an ability
-//-                     template(v-on="ability of filteredAbilities.filter((e) => selectedTechnique === e.technique_id)", :key="ability.ability_id")
-//-                     option(v-bind:value="ability.ability_id" v-text="ability.name")
-//-         .field.is-horizontal
-//-         .field-label.is-small
-//-             label.label Description
-//-         .field-body
-//-             .field
-//-             pre(v-text="filteredAbilities.find((e) => selectedAbilityId === e.ability_id)?.description || 'Select an ability to see its description'")
-//-     footer.modal-card-foot
-//-     nav.level
-//-         .level-left
-//-         button.button.is-small(@click="showRunModal = false") Close
-//-         .level-right
-//-         button.button.is-small.is-primary(@click="runAbility()", v-bind:disabled="!selectedAbilityId || running") Run
+div.modal(v-bind:class="{ 'is-active': showRunModal }")
+    .modal-background(@click="showRunModal = false")
+    .modal-card
+        header.modal-card-head
+            p.modal-card-title Run an Ability
+        section.modal-card-body
+            p.has-text-centered Select an Ability
+            form
+                .field.is-horizontal
+                .field-label.is-small
+                    label.label
+                    span.icon.is-small
+                        i.fas.fa-search
+                .field-body
+                    .field
+                    .control
+                        input.input.is-small(v-model="searchQuery" placeholder="Search for an ability..." v-on:keyup="searchForAbility()")
+                        .search-results
+                        template(v-for="result in searchResults", :key="result.ability_id")
+                            p(@click="selectAbility(result.ability_id)" v-text="result.name")
+            form
+                .field.is-horizontal
+                .field-label.is-small
+                    label.label Tactic
+                .field-body
+                    .field
+                    .control
+                        div.select.is-small.is-fullwidth
+                        select(v-model="selectedTactic" v-on:change="selectedAbilityId = ''")
+                            option(default) Choose a tactic
+                            template(v-for="tactic of [...new Set(filteredAbilities.map((e) => e.tactic))]", :key="tactic")
+                                option(v-bind:value="tactic" v-text="tactic")
+                .field.is-horizontal
+                .field-label.is-small
+                    label.label Technique
+                .field-body
+                    .field
+                    .control
+                        div.select.is-small.is-fullwidth
+                        select(v-model="selectedTechnique" v-bind:disabled="!selectedTactic" v-on:change="selectedAbilityId = ''")
+                            option(default) Choose a technique
+                            template(:key="exploit.technique_id" v-for="exploit of [...new Set(filteredAbilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => filteredAbilities.find((e) => e.technique_id === t))")
+                                option(v-bind:value="exploit.technique_id" v-text="exploit.technique_id")
+                .field.is-horizontal
+                .field-label.is-small
+                    label.label Ability
+                .field-body
+                    .field
+                    .control
+                        div.select.is-small.is-fullwidth
+                        select(v-model="selectedAbilityId", v-bind:disabled="!selectedTechnique")
+                            option(default) Choose an ability
+                            template(v-for="ability of filteredAbilities.filter((e) => selectedTechnique === e.technique_id)", :key="ability.ability_id")
+                                option(v-bind:value="ability.ability_id" v-text="ability.name")
+            template(v-if="selectedAbilityId")
+                .content
+                    hr
+                    h3 {{ selectedAbility.name }}
+                    p {{ selectedAbility.description }}
+
+                    form
+                        .field.is-horizontal
+                            .field-label.is-small
+                                label.label Obfuscator
+
+                            .field-body
+                                .field.is-narrow
+                                    .control.is-expanded
+                                        .select.is-fullwidth.is-small
+                                            select(v-model="selectedObfuscator")
+                                                template(v-for="obf in obfuscators" :key="obf.name")
+                                                    option(:value="obf.name") {{ obf.name }}
+
+                        template(v-for="fact in facts" :key="fact.trait")
+                            .field.is-horizontal
+                                .field-label.is-small
+                                    label.label {{ fact.trait }}
+
+                                .field-body
+                                    .field
+                                        .control
+                                            input.input.is-small.is-fullwidth(v-model="fact.value" placeholder="Enter a value...")
+
+                    button.button.is-small.is-primary.is-fullwidth(@click="execute()") Execute
+
+            section
+                footer.modal-card-foot
+                    nav.level
+                        .level-left
+                        .level-right
+                            .level-item
+                                button.button.is-small(@click="showRunModal = false") Close
 
 </template>
 
