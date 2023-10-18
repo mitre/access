@@ -59,18 +59,18 @@ const accessAgents = computed(() =>
           facts: []
         };
       },
-    
+
       mounted() {
         this.initPage();
       },
-    
+
       methods: {
         async initPage() {
           try {
             this.agents = await apiV2('GET', '/api/v2/agents');
             this.abilities = await apiV2('GET', '/api/v2/abilities');
             this.obfuscators = await apiV2('GET', '/api/v2/obfuscators');
-    
+
             while (this.$refs.headerAccess) {
               await this.sleep(3000);
               this.refreshAgents();
@@ -80,13 +80,13 @@ const accessAgents = computed(() =>
             console.error(error);
           }
         },
-    
+
         selectAgent() {
           this.selectedAgent = this.agents.find((agent) => agent.paw === this.selectedAgentPaw);
           this.links = this.selectedAgent.links;
           this.filterAbilitiesByPlatform();
         },
-    
+
         filterAbilitiesByPlatform() {
           let platform = this.selectedAgent.platform;
           this.filteredAbilities = [];
@@ -97,7 +97,7 @@ const accessAgents = computed(() =>
             }
           });
         },
-    
+
         async refreshAgents() {
           try {
             this.agents = await apiV2('GET', '/api/v2/agents');
@@ -109,7 +109,7 @@ const accessAgents = computed(() =>
             console.error(error);
           }
         },
-    
+
         getLinkStatus(link) {
           if (link.status === 0) {
             return 'success';
@@ -119,7 +119,7 @@ const accessAgents = computed(() =>
             return 'in progress';
           }
         },
-    
+
         showOutput(link) {
           restRequest('POST', { 'index': 'result', 'link_id': link.unique }, (data) => {
             this.outputCommand = b64DecodeUnicode(link.command);
@@ -131,7 +131,7 @@ const accessAgents = computed(() =>
             this.showOutputModal = true;
           });
         },
-    
+
         searchForAbility() {
           this.searchResults = [];
           if (!this.searchQuery) return;
@@ -144,7 +144,7 @@ const accessAgents = computed(() =>
             }
           });
         },
-    
+
         selectAbility(id) {
           this.searchQuery = [];
           this.searchResults = [];
@@ -154,12 +154,11 @@ const accessAgents = computed(() =>
           this.selectedAbilityId = id;
           this.findFacts();
         },
-    
+
         findFacts() {
           let rxp = /#{([^}]+)}/g;
           let match;
           let matches = [];
-    
           let commands = this.selectedAbility.executors.map((exec) => exec.command);
           commands.forEach((command) => {
             while (match = rxp.exec(command)) {
@@ -170,20 +169,20 @@ const accessAgents = computed(() =>
             return { trait: fact, value: '' };
           });
         },
-    
+
         async execute() {
           if (this.facts.length && this.facts.filter((fact) => !fact.value).length) {
             this.toast('Fact values cannot be empty!', false);
             return;
           }
-    
+
           let requestBody = {
             paw: this.selectedAgentPaw,
             ability_id: this.selectedAbilityId,
             facts: this.facts,
             obfuscator: this.selectedObfuscator
           };
-    
+
           try {
             await apiV2('POST', '/plugin/access/exploit', requestBody);
             this.showRunModal = false;
@@ -193,11 +192,11 @@ const accessAgents = computed(() =>
             console.error(error);
           }
         },
-    
+
         sleep(ms) {
           return new Promise(resolve => setTimeout(resolve, ms));
         },
-    
+
         toast(message, type) {
           // Your toast implementation here
         }
@@ -218,69 +217,68 @@ form
     label.label Select an agent
     .control.is-expanded
         .select.is-small.is-fullwidth
-        select(x-on:change="selectAgent()" x-model="selectedAgentPaw")
+        select(v-on:change="selectAgent()" v-model="selectedAgentPaw")
             option(value="" disabled selected) Select an agent
-            //- template(x-for="agent of agents", :key="agent.paw")
-            //- option(x-bind:value="agent.paw" x-text="`${agent.host} - ${agent.paw}`")
+            option(v-for="agent in agents", :key="agent.paw", v-bind:value="agent.paw" v-text="`${agent.host} - ${agent.paw}`")
 
-//- div.has-text-centered.content(x-show="!selectedAgentPaw")
-//- p Select an agent to get started
 
-//- div(x-show="selectedAgentPaw")
-//- .is-flex(x-show="selectedAgentPaw")
-//-     button.button.is-primary.is-small.mr-4(@click="showRunModal = true")
-//-     span.icon
-//-         i.fas.fa-running
-//-     span Run an Ability
-//-     span.mr-4
-//-     strong Agent Platform
-//-     span(x-text="selectedAgent.platform")
-//-     span
-//-     strong Compatible Abilities
-//-     span(x-text="filteredAbilities.length")
-//- p.has-text-centered.content(x-show="!links.length") No links to show
+div.has-text-centered.content(v-show="!selectedAgentPaw")
+p Select an agent to get started
 
-//- div(x-show="selectedAgentPaw && links.length")
-//- table.table.is-striped.is-fullwidth
-//-     thead
-//-     tr
-//-         th order
-//-         th name
-//-         th tactic
-//-         th status
-//-         th
-//-     tbody
-//-     template(x-for="(link, index) of links", :key="link.unique")
-//-         tr.pointer
-//-         td(x-text="index + 1")
-//-         td(x-text="link.ability.name")
-//-         td(x-text="link.ability.tactic")
-//-         td(x-text="getLinkStatus(link)" x-bind:class="{ 'has-text-danger': getLinkStatus(link) === 'failed', 'has-text-success': getLinkStatus(link) === 'success' }")
-//-         td
-//-             button.button.is-small.is-primary(@click="showOutput(link)") Output
+div(v-show="selectedAgentPaw")
+.is-flex(v-show="selectedAgentPaw")
+    button.button.is-primary.is-small.mr-4(@click="showRunModal = true")
+    span.icon
+        i.fas.fa-running
+    span Run an Ability
+    span.mr-4
+    strong Agent Platform
+    span(v-text="selectedAgent.platform")
+    span
+    strong Compatible Abilities
+    span(v-text="filteredAbilities.length")
+p.has-text-centered.content(v-show="!links.length") No links to show
 
-//- // MODALS
+div(v-show="selectedAgentPaw && links.length")
+table.table.is-striped.is-fullwidth
+    thead
+    tr
+        th order
+        th name
+        th tactic
+        th status
+        th
+    tbody
+        tr.pointer(v-for="(link, index) in links", :key="link.unique")
+            td(v-text="index + 1")
+            td(v-text="link.ability.name")
+            td(v-text="link.ability.tactic")
+            td(v-text="getLinkStatus(link)" v-bind:class="{ 'has-text-danger': getLinkStatus(link) === 'failed', 'has-text-success': getLinkStatus(link) === 'success' }")
+            td
+                button.button.is-small.is-primary(@click="showOutput(link)") Output
 
-//- div.modal(x-bind:class="{ 'is-active': showOutputModal }")
-//- .modal-background(@click="showOutputModal = false")
-//- .modal-card.wide
-//-     header.modal-card-head
-//-     p.modal-card-title Link Output
-//-     section.modal-card-body
-//-     label.label Command
-//-     pre(x-text="outputCommand")
-//-     label.label Standard Output
-//-     pre(x-text="outputResult.stdout || '[ no output to show ]'")
-//-     label.label Standard Error
-//-     pre(x-text="outputResult.stderr || '[ no errors to show ]'")
-//-     footer.modal-card-foot
-//-     nav.level
-//-         .level-left
-//-         .level-right
-//-         .level-item
-//-             button.button.is-small(@click="showOutputModal = false") Close
+// MODALS
 
-//- div.modal(x-bind:class="{ 'is-active': showRunModal }")
+div.modal(v-bind:class="{ 'is-active': showOutputModal }")
+.modal-background(@click="showOutputModal = false")
+.modal-card.wide
+    header.modal-card-head
+    p.modal-card-title Link Output
+    section.modal-card-body
+    label.label Command
+    pre(v-text="outputCommand")
+    label.label Standard Output
+    pre(v-text="outputResult.stdout || '[ no output to show ]'")
+    label.label Standard Error
+    pre(v-text="outputResult.stderr || '[ no errors to show ]'")
+    footer.modal-card-foot
+    nav.level
+        .level-left
+        .level-right
+        .level-item
+            button.button.is-small(@click="showOutputModal = false") Close
+
+//- div.modal(v-bind:class="{ 'is-active': showRunModal }")
 //- .modal-background(@click="showRunModal = false")
 //- .modal-card
 //-     header.modal-card-head
@@ -296,10 +294,10 @@ form
 //-         .field-body
 //-             .field
 //-             .control
-//-                 input.input.is-small(x-model="searchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()")
+//-                 input.input.is-small(v-model="searchQuery" placeholder="Search for an ability..." v-on:keyup="searchForAbility()")
 //-                 .search-results
-//-                 template(x-for="result of searchResults", :key="result.ability_id")
-//-                     p(@click="selectAbility(result.ability_id)" x-text="result.name")
+//-                 template(v-on="result of searchResults", :key="result.ability_id")
+//-                     p(@click="selectAbility(result.ability_id)" v-text="result.name")
 //-     form
 //-         .field.is-horizontal
 //-         .field-label.is-small
@@ -308,10 +306,10 @@ form
 //-             .field
 //-             .control
 //-                 div.select.is-small.is-fullwidth
-//-                 select(x-model="selectedTactic" x-on:change="selectedAbilityId = ''")
+//-                 select(v-model="selectedTactic" v-on:change="selectedAbilityId = ''")
 //-                     option(default) Choose a tactic
-//-                     template(x-for="tactic of [...new Set(filteredAbilities.map((e) => e.tactic))]", :key="tactic")
-//-                     option(x-bind:value="tactic" x-text="tactic")
+//-                     template(v-on="tactic of [...new Set(filteredAbilities.map((e) => e.tactic))]", :key="tactic")
+//-                     option(v-bind:value="tactic" v-text="tactic")
 //-         .field.is-horizontal
 //-         .field-label.is-small
 //-             label.label Technique
@@ -319,10 +317,10 @@ form
 //-             .field
 //-             .control
 //-                 div.select.is-small.is-fullwidth
-//-                 select(x-model="selectedTechnique" x-bind:disabled="!selectedTactic" x-on:change="selectedAbilityId = ''")
+//-                 select(v-model="selectedTechnique" v-bind:disabled="!selectedTactic" v-on:change="selectedAbilityId = ''")
 //-                     option(default) Choose a technique
-//-                     template(:key="exploit.technique_id" x-for="exploit of [...new Set(filteredAbilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => filteredAbilities.find((e) => e.technique_id === t))")
-//-                     option(x-bind:value="exploit.technique_id" x-text="exploit.technique_id")
+//-                     template(:key="exploit.technique_id" v-on="exploit of [...new Set(filteredAbilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => filteredAbilities.find((e) => e.technique_id === t))")
+//-                     option(v-bind:value="exploit.technique_id" v-text="exploit.technique_id")
 //-         .field.is-horizontal
 //-         .field-label.is-small
 //-             label.label Ability
@@ -330,22 +328,22 @@ form
 //-             .field
 //-             .control
 //-                 div.select.is-small.is-fullwidth
-//-                 select(x-model="selectedAbilityId", x-bind:disabled="!selectedTechnique")
+//-                 select(v-model="selectedAbilityId", v-bind:disabled="!selectedTechnique")
 //-                     option(default) Choose an ability
-//-                     template(x-for="ability of filteredAbilities.filter((e) => selectedTechnique === e.technique_id)", :key="ability.ability_id")
-//-                     option(x-bind:value="ability.ability_id" x-text="ability.name")
+//-                     template(v-on="ability of filteredAbilities.filter((e) => selectedTechnique === e.technique_id)", :key="ability.ability_id")
+//-                     option(v-bind:value="ability.ability_id" v-text="ability.name")
 //-         .field.is-horizontal
 //-         .field-label.is-small
 //-             label.label Description
 //-         .field-body
 //-             .field
-//-             pre(x-text="filteredAbilities.find((e) => selectedAbilityId === e.ability_id)?.description || 'Select an ability to see its description'")
+//-             pre(v-text="filteredAbilities.find((e) => selectedAbilityId === e.ability_id)?.description || 'Select an ability to see its description'")
 //-     footer.modal-card-foot
 //-     nav.level
 //-         .level-left
 //-         button.button.is-small(@click="showRunModal = false") Close
 //-         .level-right
-//-         button.button.is-small.is-primary(@click="runAbility()", x-bind:disabled="!selectedAbilityId || running") Run
+//-         button.button.is-small.is-primary(@click="runAbility()", v-bind:disabled="!selectedAbilityId || running") Run
 
 </template>
 
