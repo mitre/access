@@ -83,6 +83,7 @@ const accessAgents = computed(() =>
         },
 
         selectAgent() {
+          console.log(this.agents);
           this.selectedAgent = this.agents.find((agent) => agent.paw === this.selectedAgentPaw);
           this.links = this.selectedAgent.links;
           this.filterAbilitiesByPlatform();
@@ -148,6 +149,7 @@ const accessAgents = computed(() =>
         },
 
         selectAbility(id) {
+          console.log("heyo");
           this.searchQuery = [];
           this.searchResults = [];
           this.selectedAbility = this.abilities.find((ability) => ability.ability_id === id);
@@ -207,57 +209,57 @@ const accessAgents = computed(() =>
 </script>
 
 <template lang="pug">
-.content
+div(ref="headerAccess")
     h2 Access
     p Here you can task any agent with any ability from the database - outside the scope of an operation. This is especially useful for conducting initial access attacks. To do this, deploy an agent locally and task it with either pre-ATT&CK or initial access tactics, pointed at any target. You can even deploy an agent remotely and use it as a proxy to conduct your initial access attacks. To the right, you'll see every ability directly tasked to an agent.
-
+    hr
 // AGENT SELECTION
 
 div
-form
-    #select-agent.field.has-addons
-    label.label Select an agent
-    .control.is-expanded
-        .select.is-small.is-fullwidth
-        select(v-on:change="selectAgent()" v-model="selectedAgentPaw")
-            option(value="" disabled selected) Select an agent
-            option(v-for="agent in agents", :key="agent.paw", v-bind:value="agent.paw" v-text="`${agent.host} - ${agent.paw}`")
-
+    form
+        #select-agent.field.has-addons
+            label.label Select an agent
+            .control.is-expanded
+                .select.is-small.is-fullwidth
+                    select(v-on:change="selectAgent()" v-model="selectedAgentPaw")
+                        option(value="" disabled selected) Select an agent
+                        template(v-for="agent of agents" :key="agent.paw")
+                            option(v-bind:value="agent.paw" v-text="`${agent.host} - ${agent.paw}`")
 
 div.has-text-centered.content(v-show="!selectedAgentPaw")
-p Select an agent to get started
+    p Select an agent to get started
 
 div(v-show="selectedAgentPaw")
-.is-flex(v-show="selectedAgentPaw")
-    button.button.is-primary.is-small.mr-4(@click="showRunModal = true")
-    span.icon
-        i.fas.fa-running
-    span Run an Ability
-    span.mr-4
-    strong Agent Platform
-    span(v-text="selectedAgent.platform")
-    span
-    strong Compatible Abilities
-    span(v-text="filteredAbilities.length")
-p.has-text-centered.content(v-show="!links.length") No links to show
+    .is-flex(v-show="selectedAgentPaw")
+        button.button.is-primary.is-small.mr-4(@click="showRunModal = true")
+            span.icon
+                i.fas.fa-running
+            span Run an Ability
+        span.mr-4
+            strong Agent Platform
+            span(v-text="selectedAgent.platform")
+        span
+            strong Compatible Abilities
+            span(v-text="filteredAbilities.length")
+    p.has-text-centered.content(v-show="!links.length") No links to show
 
 div(v-show="selectedAgentPaw && links.length")
-table.table.is-striped.is-fullwidth
-    thead
-    tr
-        th order
-        th name
-        th tactic
-        th status
-        th
-    tbody
-        tr.pointer(v-for="(link, index) in links", :key="link.unique")
-            td(v-text="index + 1")
-            td(v-text="link.ability.name")
-            td(v-text="link.ability.tactic")
-            td(v-text="getLinkStatus(link)" v-bind:class="{ 'has-text-danger': getLinkStatus(link) === 'failed', 'has-text-success': getLinkStatus(link) === 'success' }")
-            td
-                button.button.is-small.is-primary(@click="showOutput(link)") Output
+    table.table.is-striped.is-fullwidth
+        thead
+            tr
+                th order
+                th name
+                th tactic
+                th status
+                th
+        tbody
+            tr.pointer(v-for="(link, index) in links", :key="link.unique")
+                td(v-text="index + 1")
+                td(v-text="link.ability.name")
+                td(v-text="link.ability.tactic")
+                td(v-text="getLinkStatus(link)" v-bind:class="{ 'has-text-danger': getLinkStatus(link) === 'failed', 'has-text-success': getLinkStatus(link) === 'success' }")
+                td
+                    button.button.is-small.is-primary(@click="showOutput(link)") Output
 
 // MODALS
 
@@ -265,20 +267,18 @@ div.modal(v-bind:class="{ 'is-active': showOutputModal }")
     .modal-background(@click="showOutputModal = false")
     .modal-card.wide
         header.modal-card-head
-        p.modal-card-title Link Output
+            p.modal-card-title Link Output
         section.modal-card-body
-        label.label Command
-        pre(v-text="outputCommand")
-        label.label Standard Output
-        pre(v-text="outputResult.stdout || '[ no output to show ]'")
-        label.label Standard Error
-        pre(v-text="outputResult.stderr || '[ no errors to show ]'")
+            label.label Command
+            pre(v-text="outputCommand")
+            label.label Standard Output
+            pre(v-text="outputResult.stdout || '[ no output to show ]'")
         footer.modal-card-foot
-        nav.level
-            .level-left
-            .level-right
-            .level-item
-                button.button.is-small(@click="showOutputModal = false") Close
+            nav.level
+                .level-left
+                .level-right
+                    .level-item
+                        button.button.is-small(@click="showOutputModal = false") Close
 
 div.modal(v-bind:class="{ 'is-active': showRunModal }")
     .modal-background(@click="showRunModal = false")
@@ -289,51 +289,51 @@ div.modal(v-bind:class="{ 'is-active': showRunModal }")
             p.has-text-centered Select an Ability
             form
                 .field.is-horizontal
-                .field-label.is-small
-                    label.label
-                    span.icon.is-small
-                        i.fas.fa-search
+                    .field-label.is-small
+                        label.label
+                            span.icon.is-small
+                                i.fas.fa-search
                 .field-body
                     .field
-                    .control
-                        input.input.is-small(v-model="searchQuery" placeholder="Search for an ability..." v-on:keyup="searchForAbility()")
-                        .search-results
-                        template(v-for="result in searchResults", :key="result.ability_id")
-                            p(@click="selectAbility(result.ability_id)" v-text="result.name")
+                        .control
+                            input.input.is-small(v-model="searchQuery" placeholder="Search for an ability..." v-on:keyup="searchForAbility()")
+                            .search-results
+                                template(v-for="result in searchResults", :key="result.ability_id")
+                                    p(@click="selectAbility(result.ability_id)" v-text="result.name")
             form
                 .field.is-horizontal
-                .field-label.is-small
-                    label.label Tactic
+                    .field-label.is-small
+                        label.label Tactic
                 .field-body
                     .field
-                    .control
-                        div.select.is-small.is-fullwidth
-                        select(v-model="selectedTactic" v-on:change="selectedAbilityId = ''")
-                            option(default) Choose a tactic
-                            template(v-for="tactic of [...new Set(filteredAbilities.map((e) => e.tactic))]", :key="tactic")
-                                option(v-bind:value="tactic" v-text="tactic")
+                        .control
+                            div.select.is-small.is-fullwidth
+                                select(v-model="selectedTactic" v-on:change="selectedAbilityId = ''")
+                                    option(default) Choose a tactic
+                                    template(v-for="tactic of [...new Set(filteredAbilities.map((e) => e.tactic))]", :key="tactic")
+                                        option(v-bind:value="tactic" v-text="tactic")
                 .field.is-horizontal
-                .field-label.is-small
-                    label.label Technique
+                    .field-label.is-small
+                        label.label Technique
                 .field-body
                     .field
-                    .control
-                        div.select.is-small.is-fullwidth
-                        select(v-model="selectedTechnique" v-bind:disabled="!selectedTactic" v-on:change="selectedAbilityId = ''")
-                            option(default) Choose a technique
-                            template(:key="exploit.technique_id" v-for="exploit of [...new Set(filteredAbilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => filteredAbilities.find((e) => e.technique_id === t))")
-                                option(v-bind:value="exploit.technique_id" v-text="exploit.technique_id")
+                        .control
+                            div.select.is-small.is-fullwidth
+                                select(v-model="selectedTechnique" v-bind:disabled="!selectedTactic" v-on:change="selectedAbilityId = ''")
+                                    option(default) Choose a technique
+                                    template(:key="exploit.technique_id" v-for="exploit of [...new Set(filteredAbilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => filteredAbilities.find((e) => e.technique_id === t))")
+                                        option(v-bind:value="exploit.technique_id" v-text="exploit.technique_id")
                 .field.is-horizontal
-                .field-label.is-small
-                    label.label Ability
+                    .field-label.is-small
+                        label.label Ability
                 .field-body
                     .field
-                    .control
-                        div.select.is-small.is-fullwidth
-                        select(v-model="selectedAbilityId", v-bind:disabled="!selectedTechnique")
-                            option(default) Choose an ability
-                            template(v-for="ability of filteredAbilities.filter((e) => selectedTechnique === e.technique_id)", :key="ability.ability_id")
-                                option(v-bind:value="ability.ability_id" v-text="ability.name")
+                        .control
+                            div.select.is-small.is-fullwidth
+                                select(v-model="selectedAbilityId", v-bind:disabled="!selectedTechnique")
+                                    option(default) Choose an ability
+                                    template(v-for="ability of filteredAbilities.filter((e) => selectedTechnique === e.technique_id)", :key="ability.ability_id")
+                                        option(v-bind:value="ability.ability_id" v-text="ability.name")
             template(v-if="selectedAbilityId")
                 .content
                     hr
