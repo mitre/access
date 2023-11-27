@@ -1,40 +1,7 @@
-<script setup>
-import { inject, ref, onMounted, computed } from "vue";
-import { storeToRefs } from "pinia";
-import { useAbilityStore } from "@/stores/abilityStore.js";
-import { useAdversaryStore } from "@/stores/adversaryStore.js";
-import { useAgentStore } from "@/stores/agentStore.js";
-import { useAccessStore } from "@/stores/accessStore.js";
-
-const abilityStore = useAbilityStore();
-const { abilities } = storeToRefs(abilityStore);
-const adversaryStore = useAdversaryStore();
-const { adversaries } = storeToRefs(adversaryStore);
-const agentStore = useAgentStore();
-const { agents } = storeToRefs(agentStore);
-const accessStore = useAccessStore();
-const $api = inject("$api");
-
-onMounted(async () => {
-  await abilityStore.getAbilities($api);
-  await adversaryStore.getAdversaries($api);
-  await agentStore.getAgents($api);
-
-
-});
-const accessAbilities = computed(() =>
-  abilities.value.filter((ability) => ability.plugin === "access")
-);
-const accessAdversaries = computed(() =>
-  adversaries.value.filter((adversary) => adversary.plugin === "access")
-);
-const accessAgents = computed(() =>
-  agents.value.filter((agent) => agent.plugin === "access")
-);
-
-</script>
 <script>
+import { b64DecodeUnicode } from "@/utils/utils";
     export default {
+      inject: ["$api"],
       data() {
         return {
           // Core variables
@@ -87,14 +54,18 @@ const accessAgents = computed(() =>
           facts: []
         };
       },
-
+      created() {
+        this.initPage();
+      },
       methods: {
         async initPage() {
           try {
-            this.agents = await this.accessStore.apiV2('GET', '/api/v2/agents');
-            this.abilities = await this.accessStore.apiV2('GET', '/api/v2/abilities');
-            this.obfuscators = await this.accessStore.apiV2('GET', '/api/v2/obfuscators');
-
+            const agentsRes = await this.$api.get('/api/v2/agents');
+            this.agents = agentsRes.data;
+            const abilityRes = await this.$api.get('/api/v2/abilities');
+            this.abilities = abilityRes.data;
+            const obfuscatorsRes = await this.$api.get('/api/v2/obfuscators');
+            this.obfuscators = obfuscatorsRes.data;
             while (this.$refs.headerAccess) {
               await this.sleep(3000);
               this.refreshAgents();
@@ -124,7 +95,8 @@ const accessAgents = computed(() =>
 
         async refreshAgents() {
           try {
-            this.agents = await this.accessStore.apiV2('GET', '/api/v2/agents');
+            const res = await this.$api.get('/api/v2/agents');
+            this.agents = res.data;
             if (this.selectedAgentPaw) {
               this.selectAgent();
             }
@@ -145,7 +117,7 @@ const accessAgents = computed(() =>
         },
 
         showOutput(link) {
-            this.accessStore.restRequest('POST', { 'index': 'result', 'link_id': link.unique }, (data) => {
+          this.$api.post('/api/rest', {'index': 'result', 'link_id': link.unique}).then((data) => {
             this.outputCommand = b64DecodeUnicode(link.command);
             try {
               this.outputResult = JSON.parse(b64DecodeUnicode(data.output));
@@ -153,7 +125,6 @@ const accessAgents = computed(() =>
               this.outputResult = ""
             }
             this.showOutputModal = true;
-            console.log(outputistrue)
           });
         },
 
@@ -209,7 +180,7 @@ const accessAgents = computed(() =>
           };
 
           try {
-            await this.accessStore.apiV2('POST', '/plugin/access/exploit', requestBody);
+            await this.$api.post('/plugin/access/exploit', requestBody);
             this.showRunModal = false;
             this.refreshAgents();
             this.toast('Executed ability', true);
@@ -330,9 +301,8 @@ div.modal(v-bind:class="{ 'is-active': showRunModal }")
                             .control
                                 div.select.is-small.is-fullwidth
                                     select(v-model="selectedTactic" v-on:change="selectedAbilityId = ''")
-                                        option(default) Choose a tactic
-                                        template(v-for="tactic of [...new Set(filteredAbilities.map((e) => e.tactic))]", :key="tactic")
-                                            option(v-bind:value="tactic" v-text="tactic")
+                                        option(disabled selected value="") Choose a tactic 
+                                        option(v-for="tactic of [...new Set(filteredAbilities.map((e) => e.tactic))]", :key="tactic" :value="tactic") {{ tactic }}
                 .field.is-horizontal
                     .field-label.is-small
                         label.label Technique
@@ -341,7 +311,7 @@ div.modal(v-bind:class="{ 'is-active': showRunModal }")
                             .control
                                 div.select.is-small.is-fullwidth
                                     select(v-model="selectedTechnique" v-bind:disabled="!selectedTactic" v-on:change="selectedAbilityId = ''")
-                                        option(default) Choose a technique
+                                        option(disabled selected value="") Choose a technique 
                                         template(:key="exploit.technique_id" v-for="exploit of [...new Set(filteredAbilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => filteredAbilities.find((e) => e.technique_id === t))")
                                             option(v-bind:value="exploit.technique_id" v-text="exploit.technique_id")
                 .field.is-horizontal
@@ -352,7 +322,7 @@ div.modal(v-bind:class="{ 'is-active': showRunModal }")
                             .control
                                 div.select.is-small.is-fullwidth
                                     select(v-model="selectedAbilityId", v-bind:disabled="!selectedTechnique" v-on:change="selectAbility(selectedAbilityId)")
-                                        option(default) Choose an ability
+                                        option(disabled selected value="") Choose an ability 
                                         template(v-for="ability of filteredAbilities.filter((e) => selectedTechnique === e.technique_id)", :key="ability.ability_id")
                                             option(v-bind:value="ability.ability_id" v-text="ability.name")
             template(v-if="selectedAbilityId")
