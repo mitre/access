@@ -120,7 +120,7 @@ import { b64DecodeUnicode } from "@/utils/utils";
           this.$api.post('/api/rest', {'index': 'result', 'link_id': link.unique}).then((data) => {
             this.outputCommand = b64DecodeUnicode(link.command);
             try {
-              this.outputResult = JSON.parse(b64DecodeUnicode(data.output));
+              this.outputResult = JSON.parse(b64DecodeUnicode(data.data.output));
             } catch (SyntaxError) {
               this.outputResult = ""
             }
