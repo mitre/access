@@ -1,3 +1,3 @@
-# Access
+# MITRE Caldera Plugin: Access
 
-Plugin supplying CALDERA with red-team tools and functions, as applied to initial access.
+Plugin supplying Caldera with red-team tools and functions, as applied to initial access.
