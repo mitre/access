@@ -2,9 +2,21 @@ import copy
 
 from aiohttp import web
 from aiohttp_jinja2 import template
+import aiohttp_apispec
+import marshmallow as ma
+from marshmallow import fields
 
+from app.objects.secondclass.c_link import LinkSchema
 from app.objects.secondclass.c_fact import Fact
 from app.service.auth_svc import for_all_public_methods, check_authorization
+
+
+class ExploitSchema(ma.Schema):
+    ability_id = fields.String()
+    paw = fields.String()
+    ability_id = fields.String()
+    facts = fields.List(fields.Dict)
+    obfuscator = fields.String()
 
 
 @for_all_public_methods(check_authorization)
@@ -24,11 +36,17 @@ class AccessApi:
         return dict(agents=[a.display for a in await self.data_svc.locate('agents', match=search)],
                     abilities=[a.display for a in abilities], tactics=tactics, obfuscators=obfuscators)
 
+    @aiohttp_apispec.docs(tags=['access'],
+                          summary='Task an agent with single ability, outside of an operation.',
+                          description='Access plugin API endpoint that allows for agents to be tasked with single ability outside of operation.')
+    @aiohttp_apispec.querystring_schema(ExploitSchema)
+    @aiohttp_apispec.response_schema(LinkSchema(many=True),
+                                     description='The response is a list of all created links.')
     async def exploit(self, request):
         data = await request.json()
         converted_facts = [Fact(trait=f['trait'], value=f['value']) for f in data.get('facts', [])]
-        await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], data['obfuscator'], converted_facts)
-        return web.json_response('complete')
+        links = await self.rest_svc.task_agent_with_ability(data['paw'], data['ability_id'], data['obfuscator'], converted_facts)
+        return web.json_response(links)
 
     async def abilities(self, request):
         data = await request.json()
