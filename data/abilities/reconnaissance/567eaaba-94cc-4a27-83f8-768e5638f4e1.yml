@@ -2,10 +2,10 @@
 - id: 567eaaba-94cc-4a27-83f8-768e5638f4e1
   name: NMAP scan
   description: Scan an external host for open ports and services
-  tactic: technical-information-gathering
+  tactic: reconnaissance
   technique:
-    name: Conduct active scanning
-    attack_id: T1254
+    name: Active Scanning
+    attack_id: T1595
   platforms:
     darwin,linux:
       sh:

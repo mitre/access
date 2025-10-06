@@ -2,10 +2,10 @@
 - id: bed8f28e-c0ed-463e-9e31-d5607e5473df
   name: Load Metasploit Abilities
   description: Load Metasploit Abilities
-  tactic: build-capabilities
+  tactic: resource-development
   technique:
-    name: Build or acquire exploits
-    attack_id: T1349
+    name: "Obtain Capabilities: Exploits"
+    attack_id: T1588.005
   platforms:
     darwin,linux:
       sh:
